@@ -1,0 +1,679 @@
+import { MARKERS } from '../data/markers.js';
+import { amz } from '../data/affiliateConfig.js';
+
+export const STATUS = {
+  CRITICAL: 'critical',
+  CONCERN: 'concern',
+  OPTIMAL: 'optimal',
+  UNKNOWN: 'unknown',
+};
+
+export function analyzeMarker(marker, value, optimalOverride) {
+  if (value === null || value === undefined || value === '') {
+    return { status: STATUS.UNKNOWN, direction: null, message: null };
+  }
+
+  const num = parseFloat(value);
+  if (isNaN(num)) return { status: STATUS.UNKNOWN, direction: null, message: null };
+
+  const { standard } = marker;
+  const optimal = optimalOverride || marker.optimal;
+
+  if (standard.low !== undefined && num < standard.low) {
+    return { status: STATUS.CRITICAL, direction: 'low', message: marker.lowConcern };
+  }
+  if (standard.high !== undefined && num > standard.high) {
+    return { status: STATUS.CRITICAL, direction: 'high', message: marker.highConcern };
+  }
+  if (optimal) {
+    if (optimal.low !== undefined && num < optimal.low) {
+      return { status: STATUS.CONCERN, direction: 'low', message: marker.lowConcern };
+    }
+    if (optimal.high !== undefined && num > optimal.high) {
+      return { status: STATUS.CONCERN, direction: 'high', message: marker.highConcern };
+    }
+  }
+
+  return { status: STATUS.OPTIMAL, direction: null, message: null };
+}
+
+function getActiveMarkers(perspective) {
+  if (!perspective || perspective.id === 'hashimotos') {
+    return MARKERS.filter(m => !m.perspectiveOnly || m.perspectiveOnly.length === 0);
+  }
+  return MARKERS.filter(m => {
+    if (!m.perspectiveOnly || m.perspectiveOnly.length === 0) return true;
+    return m.perspectiveOnly.includes(perspective.id);
+  });
+}
+
+export function analyzeAllMarkers(values, perspective) {
+  const results = [];
+  const activeMarkers = getActiveMarkers(perspective);
+  for (const marker of activeMarkers) {
+    const value = values[marker.id];
+    if (value === null || value === undefined || value === '') continue;
+    const optimalOverride = perspective?.optimalOverrides?.[marker.id];
+    const analysis = analyzeMarker(marker, value, optimalOverride);
+    results.push({ marker, value: parseFloat(value), ...analysis });
+  }
+  return results;
+}
+
+// Round to 3 significant figures for display
+function r(n) {
+  return parseFloat(n.toPrecision(3));
+}
+
+export function generateTakeaways(results, perspective) {
+  const takeaways = [];
+
+  const get = (id) => results.find(r => r.marker.id === id);
+  const tsh      = get('tsh');
+  const ft4      = get('ft4');
+  const ft3      = get('ft3');
+  const rt3      = get('rt3');
+  const tpoAb    = get('tpo_ab');
+  const tgAb     = get('tg_ab');
+  const vitd     = get('vitd');
+  const ferritin = get('ferritin');
+  const b12      = get('b12');
+  const crp      = get('crp');
+
+  const critical = results.filter(r => r.status === STATUS.CRITICAL);
+  const concerns = results.filter(r => r.status === STATUS.CONCERN);
+
+  const isFertility = perspective?.id === 'fertility';
+  const isPcos      = perspective?.id === 'pcos';
+
+  // ─── TSH out of standard range ──────────────────────────────────────────────
+  if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'high') {
+    takeaways.push({
+      priority: 'high',
+      icon: '🚨',
+      title: `TSH is ${r(tsh.value)} — Your Thyroid Is Struggling`,
+      detail: `Your TSH of ${r(tsh.value)} is above the upper limit of 4.0, which means your thyroid isn't making enough hormone. Think of TSH like a distress signal — the higher it is, the louder your body is calling for help. What to do: (1) Call your doctor soon — don't wait for your next scheduled checkup. You likely need to start or increase thyroid medication. (2) Ask them to also check your Free T3 and Free T4 at the same time. (3) Write down your symptoms before the appointment so you don't forget anything.${isFertility ? ' (4) Make sure your doctor knows you are trying to conceive — the TSH target during fertility treatment is under 2.5, which requires a more aggressive medication adjustment.' : ''}`,
+    });
+  }
+
+  if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'low') {
+    takeaways.push({
+      priority: 'high',
+      icon: '⚠️',
+      title: `TSH is ${r(tsh.value)} — You May Be Taking Too Much Thyroid Medication`,
+      detail: `Your TSH of ${r(tsh.value)} is below the lower limit of 0.4, which can mean you're getting more thyroid hormone than your body needs. Too much thyroid hormone over time can cause bone loss and an irregular heartbeat. What to do: (1) Contact your doctor to review your current medication dose. (2) Watch for signs: a racing heart, feeling hot when others aren't, anxiety, shaking hands, or unexplained weight loss. (3) Ask for a follow-up TSH test 6–8 weeks after any dose change.`,
+    });
+  }
+
+  // TSH concern — fertility perspective gets its own version
+  if (tsh && tsh.status === STATUS.CONCERN && tsh.direction === 'high') {
+    if (isFertility) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🌱',
+        title: `TSH is ${r(tsh.value)} — This Needs to Be Under 2.5 Before Trying to Conceive`,
+        detail: `When trying to get pregnant, most fertility specialists recommend getting TSH below 2.5 — and ideally between 0.5 and 2.0. A TSH of ${r(tsh.value)} raises the risk of miscarriage, especially in the first trimester when the baby depends completely on your thyroid hormone before its own thyroid develops. Many regular doctors won't treat TSH under 4.0, but fertility guidelines are stricter. What to do: (1) Tell your doctor specifically that you are trying to conceive — those words change the target range they should aim for. (2) Ask about a small dose increase to get TSH under 2.5 before trying. (3) Ask for Free T4 and Free T3 to be tested alongside TSH.`,
+      });
+    } else {
+      takeaways.push({
+        priority: 'medium',
+        icon: '📈',
+        title: `TSH is ${r(tsh.value)} — Normal on Paper, But Not Ideal for Hashimoto's`,
+        detail: `Your TSH of ${r(tsh.value)} falls within the standard "normal" range (under 4.0), but most Hashimoto's specialists aim for 1.0–2.5. Many people feel their best when TSH is between 1 and 2. What to do: (1) Bring this up at your next doctor's appointment — especially if you're still feeling tired, foggy, or gaining weight despite being on medication. (2) Write down your symptoms beforehand. A TSH between 2.5 and 4.0 combined with ongoing symptoms is a reasonable reason to ask about a small dose adjustment.`,
+      });
+    }
+  }
+
+  // ─── T4→T3 Conversion pattern ────────────────────────────────────────────────
+  if (
+    ft3 && (ft3.status === STATUS.CRITICAL || ft3.status === STATUS.CONCERN) &&
+    ft4 && (ft4.status === STATUS.OPTIMAL || ft4.status === STATUS.CONCERN) &&
+    tsh && (tsh.status === STATUS.OPTIMAL || tsh.status === STATUS.CONCERN)
+  ) {
+    takeaways.push({
+      priority: 'high',
+      icon: '🔄',
+      title: `Free T3 is ${r(ft3.value)} — Your Body May Not Be Converting Thyroid Hormone Properly`,
+      detail: `Your TSH (${r(tsh.value)}) and Free T4 (${r(ft4.value)}) look okay, but your Free T3 of ${r(ft3.value)} is lower than it should be (target: ${ft3.marker.optimal.low}+). Here's what's happening: T4 is a "storage" hormone your body needs to convert into T3, which is the form your cells actually run on. This pattern suggests the conversion isn't working well. This is very common in Hashimoto's and is often why people still feel awful even when their doctor says their labs look fine. What to do: (1) Ask your doctor about adding T3 medication directly (it's called liothyronine or Cytomel), or switching to a natural thyroid medication like Armour Thyroid that already contains both hormones. (2) Make sure your selenium, ferritin, and zinc levels are good — your body needs these to make the conversion. (3) Don't eat too little — severe calorie restriction slows down this conversion.`,
+    });
+  }
+
+  // ─── Elevated TPO Antibodies ─────────────────────────────────────────────────
+  if (tpoAb && (tpoAb.status === STATUS.CRITICAL || tpoAb.status === STATUS.CONCERN)) {
+    const xAboveOptimal = (tpoAb.value / 9).toFixed(1);
+    const severity = tpoAb.status === STATUS.CRITICAL ? 'well above' : 'above';
+
+    if (isFertility) {
+      takeaways.push({
+        priority: 'high',
+        icon: '⚠️',
+        title: `TPO Antibodies Are ${r(tpoAb.value)} — This Is a Miscarriage Risk Factor`,
+        detail: `High TPO antibodies significantly increase the risk of miscarriage and preterm birth — even when your thyroid function looks normal on paper. The antibodies cause inflammation that can interfere with implantation and early pregnancy. This is one of the most important things to address before trying to conceive. What to do: (1) Tell your OB about this number and ask whether your TSH target should be under 1.5 during pregnancy. (2) Work on lowering antibodies now: selenium 200 mcg/day (look for "selenomethionine" on the label), strict gluten-free diet, and getting Vitamin D to 60–80 ng/mL. (3) Ask your doctor about low-dose levothyroxine — some studies show treating even mild thyroid issues in women with elevated TPO antibodies reduces miscarriage risk. (4) Once pregnant, ask for your thyroid to be checked every 4–6 weeks — antibodies can shift rapidly during pregnancy.`,
+      });
+    } else {
+      takeaways.push({
+        priority: 'high',
+        icon: '🛡️',
+        title: `TPO Antibodies are ${r(tpoAb.value)} — Your Immune System Is Attacking Your Thyroid`,
+        detail: `Your TPO antibodies of ${r(tpoAb.value)} IU/mL are ${severity} the standard limit of 34 (and ${xAboveOptimal}× the ideal level of 9). These antibodies are your immune system mistakenly attacking your own thyroid tissue — the higher the number, the more active the attack. Steps that have been shown to lower antibody levels: (1) Take selenium 200 mcg/day — look for "selenomethionine" on the label, not selenite. Studies show this can cut antibody levels in half within 3 months. (2) Cut out gluten completely for at least 3 months — not just "less gluten," but fully gluten-free. Many people see a big drop in antibodies from this alone. (3) Get your Vitamin D up to 50–80 ng/mL — low Vitamin D directly makes the immune attack worse. (4) Ask your doctor about a medication called Low Dose Naltrexone (LDN) — it's showing promise for calming autoimmune conditions. (5) Retest your antibodies in 3–6 months to see if these changes are working.`,
+      });
+    }
+  }
+
+  // ─── Elevated TG Antibodies ───────────────────────────────────────────────────
+  if (tgAb && (tgAb.status === STATUS.CRITICAL || tgAb.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: 'high',
+      icon: '🛡️',
+      title: `TG Antibodies are ${r(tgAb.value)} — Autoimmune Attack on Your Thyroid Confirmed`,
+      detail: `Your TG antibodies of ${r(tgAb.value)} IU/mL are above the normal range. These are a second type of antibody that attack a different part of your thyroid — the protein it uses to make hormone. This confirms your immune system is actively damaging your thyroid tissue. What to do: (1) Follow the same steps as for TPO antibodies: selenium, cutting out gluten, and getting your Vitamin D up. (2) Ask your doctor whether your other autoimmune markers should be checked — elevated TG antibodies sometimes appear alongside other autoimmune conditions. (3) Retest in 3–6 months after making changes.${isFertility ? ' (4) Tell your OB about your TG antibodies before conceiving — these raise miscarriage risk and your thyroid should be monitored closely once pregnant.' : ''}`,
+    });
+  }
+
+  // ─── Antibody + Low Vitamin D connection ─────────────────────────────────────
+  const hasHighAntibodies = (tpoAb && tpoAb.status !== STATUS.OPTIMAL) || (tgAb && tgAb.status !== STATUS.OPTIMAL);
+  if (hasHighAntibodies && vitd && (vitd.status === STATUS.CRITICAL || vitd.status === STATUS.CONCERN)) {
+    const targetRange = isFertility ? '60–80' : '50–80';
+    const dose = vitd.value < 30 ? '5,000–10,000' : '2,000–5,000';
+    takeaways.push({
+      priority: 'high',
+      icon: '🔗',
+      title: `Low Vitamin D + High Antibodies — These Two Are Connected`,
+      detail: `Your Vitamin D of ${r(vitd.value)} ng/mL and your high antibodies aren't separate problems — Vitamin D is one of the main things that tells your immune system to calm down. Research shows that getting Vitamin D up to the ${targetRange} range can actually lower your antibody levels. What to do: (1) Start a Vitamin D3 supplement combined with K2 — for your level, a good starting dose is ${dose} IU of D3 per day, paired with 100–200 mcg of K2. Always take D3 with K2 — K2 makes sure the calcium goes to your bones, not your arteries. (2) Take it with a meal that has some fat in it — Vitamin D absorbs much better that way. (3) Retest your Vitamin D in 8–12 weeks and adjust until you land in the ${targetRange} range.`,
+    });
+  } else if (vitd && (vitd.status === STATUS.CRITICAL || vitd.status === STATUS.CONCERN)) {
+    const targetRange = isFertility ? '60–80' : '50–80';
+    const dose = vitd.value < 30 ? '5,000–10,000' : '2,000–5,000';
+    takeaways.push({
+      priority: isFertility ? 'high' : 'medium',
+      icon: '☀️',
+      title: isFertility
+        ? `Vitamin D is ${r(vitd.value)} — Should Be 60–80 ng/mL Before Conceiving`
+        : `Vitamin D is ${r(vitd.value)} — Too Low for Good Immune Health`,
+      detail: isFertility
+        ? `Vitamin D plays a direct role in fertility — it helps with implantation, supports healthy fetal development, and reduces miscarriage risk. For trying to conceive, the target is higher: 60–80 ng/mL. Low Vitamin D also worsens TPO antibody activity. What to do: (1) Start Vitamin D3 + K2 — at your level, a good dose is ${dose} IU of D3 per day with 100–200 mcg of K2. (2) Take with a meal containing fat. (3) Retest in 8 weeks and adjust until you're in the 60–80 range before trying.`
+        : `Your Vitamin D of ${r(vitd.value)} ng/mL is below the ideal 50–80 range for Hashimoto's. Low Vitamin D makes it harder for your immune system to regulate itself and is linked to worse symptoms. What to do: (1) Start a Vitamin D3 + K2 supplement — a good starting dose for your level is ${dose} IU of D3 per day with 100–200 mcg of K2. (2) Take it with a meal that contains fat — Vitamin D needs fat to absorb properly. (3) Retest in 8–12 weeks. Don't stop at just "above 30" — aim for 50–80.`,
+    });
+  }
+
+  // ─── Low Ferritin ─────────────────────────────────────────────────────────────
+  if (ferritin && (ferritin.status === STATUS.CRITICAL || ferritin.status === STATUS.CONCERN)) {
+    const isVeryLow = ferritin.status === STATUS.CRITICAL;
+    if (isFertility) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🩸',
+        title: `Ferritin is ${r(ferritin.value)} — Needs to Be 90+ Before Pregnancy`,
+        detail: `For trying to conceive, ferritin should be at least 90 ng/mL — ideally 100+. Pregnancy doubles your iron requirements starting in the first trimester, and going in iron-depleted leads to severe fatigue, increased miscarriage risk, low birth weight, and very difficult postpartum recovery. What to do: (1) Start building iron stores now — don't wait until you're pregnant. Look for "iron bisglycinate" (a gentler form that won't upset your stomach like regular iron pills). (2) Take it with Vitamin C and at least 4 hours away from your thyroid medication. (3) Retest every 2–3 months until you reach 90+.`,
+      });
+    } else {
+      takeaways.push({
+        priority: ferritin.status === STATUS.CRITICAL ? 'high' : 'medium',
+        icon: '🩸',
+        title: `Ferritin is ${r(ferritin.value)} — Your Iron Stores Are ${isVeryLow ? 'Very' : 'Too'} Low`,
+        detail: `Your ferritin of ${r(ferritin.value)} ng/mL is below the 70–90 level your thyroid needs to work properly. Ferritin measures how much iron your body has stored — and low iron is one of the most common and overlooked reasons people with Hashimoto's still feel exhausted, lose hair, and have brain fog, even when their other labs look okay. It also makes it harder for your body to convert thyroid hormone into the usable form. What to do: (1) Ask your doctor about an iron supplement — look for "iron bisglycinate," which is a gentler form that won't upset your stomach the way regular iron pills can. (2) Take your iron with Vitamin C (a glass of orange juice or a 500 mg Vitamin C tablet) — it helps your body absorb significantly more iron. (3) Take iron at least 4 hours away from your thyroid medication — iron blocks thyroid hormone from being absorbed. (4) Skip calcium supplements, antacids, and coffee for at least 2 hours after taking iron. (5) Retest your ferritin every 3 months until it reaches 70–100.`,
+      });
+    }
+  }
+
+  // ─── Low B12 ──────────────────────────────────────────────────────────────────
+  if (b12 && (b12.status === STATUS.CRITICAL || b12.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: b12.status === STATUS.CRITICAL ? 'high' : 'medium',
+      icon: '⚡',
+      title: `Vitamin B12 is ${r(b12.value)} — Below the Level Your Body Needs`,
+      detail: `Your B12 of ${r(b12.value)} pg/mL is below the ideal 500 level for protecting your nerves and energy. People with Hashimoto's tend to be low in B12 because the same autoimmune process can affect how well your stomach absorbs it. Low B12 causes fatigue, brain fog, tingling or numbness in hands and feet, and mood problems — which all look a lot like Hashimoto's symptoms, making it easy to miss. What to do: (1) Get a B12 supplement, but make sure it says "methylcobalamin" on the label — not "cyanocobalamin." The methylcobalamin form is ready for your body to use right away. (2) Place the tablet under your tongue and let it dissolve — this gets it into your bloodstream directly, without needing your stomach to absorb it. Take 1,000 mcg per day. (3) If your B12 stays low even after months of supplements, ask your doctor about B12 injections and whether your stomach might have trouble absorbing B12. (4) Retest in 3 months. Aim for 500–900.${isFertility ? ' Note: B12 and folate work together for a healthy pregnancy — make sure both are in good range.' : ''}`,
+    });
+  }
+
+  // ─── Reverse T3 ───────────────────────────────────────────────────────────────
+  if (rt3 && (rt3.status === STATUS.CRITICAL || rt3.status === STATUS.CONCERN)) {
+    const ratio = ft3 ? (ft3.value / rt3.value).toFixed(2) : null;
+    const ratioOk = ratio ? parseFloat(ratio) >= 0.2 : null;
+    takeaways.push({
+      priority: 'medium',
+      icon: '🚫',
+      title: `Reverse T3 is ${r(rt3.value)} — Your Thyroid Hormone Is Being Blocked`,
+      detail: `Your Reverse T3 of ${r(rt3.value)} is above the ideal level of 15. Think of Reverse T3 as a "dummy key" — it fits into the same lock as your active thyroid hormone (T3) but doesn't actually open the door. When Reverse T3 is high, it blocks your real T3 from working, leaving you feeling hypothyroid even when other numbers look fine.${ratio ? ` Your Free T3 to Reverse T3 ratio is ${ratio} — ideally this should be above 0.20, so yours is ${ratioOk ? 'just within range' : 'below where it should be'}.` : ''} Common causes: ongoing stress, inflammation, low iron stores, or eating too little. What to do: (1) Consider a home stress hormone (cortisol) test — high cortisol is one of the biggest drivers of high Reverse T3. Ask your doctor about a home saliva test where you collect samples 4 times in one day. (2) Make sure your ferritin is above 70 — low iron raises Reverse T3. (3) If you're only on levothyroxine (T4-only medication), ask your doctor about adding T3 or switching to a natural thyroid medication. (4) Don't cut calories too severely — this directly raises Reverse T3.`,
+    });
+  }
+
+  // ─── Elevated CRP ─────────────────────────────────────────────────────────────
+  if (crp && (crp.status === STATUS.CRITICAL || crp.status === STATUS.CONCERN)) {
+    const highRisk = crp.value > 3.0;
+    takeaways.push({
+      priority: crp.status === STATUS.CRITICAL ? 'high' : 'medium',
+      icon: '🔥',
+      title: `Inflammation Marker (CRP) is ${r(crp.value)} — Your Body Is Inflamed`,
+      detail: `Your CRP of ${r(crp.value)} mg/L is ${highRisk ? 'in the high-risk range (above 3.0)' : 'above the ideal level of 1.0'}. CRP is a protein your body makes when it's inflamed — and ongoing inflammation makes your immune system more aggressive, raises your antibody levels, and makes it harder to convert thyroid hormone.${isFertility ? ' Inflammation also interferes with implantation and early pregnancy.' : ''} What to do: (1) Remove the biggest food triggers first: cut out gluten and dairy completely for at least 3 months. These two foods are the most common drivers of inflammation in Hashimoto's. (2) Add omega-3 fish oil — 2 to 3 grams per day. This is one of the most studied natural anti-inflammatories. (3) Try a turmeric/curcumin supplement — make sure the label says it contains black pepper extract, which helps your body absorb it. Take 500 mg twice a day. (4) Protect your sleep — even one bad night raises CRP measurably. Aim for 7–9 hours. (5) Ask your doctor to check for hidden gut infections like H. pylori (a stomach bacteria) — these are a very common but often overlooked cause of high CRP in Hashimoto's. (6) Retest CRP in 3 months to see if it's coming down.`,
+    });
+  }
+
+  // ─── PCOS-specific takeaways ─────────────────────────────────────────────────
+  if (isPcos) {
+    const fastingInsulin = get('fasting_insulin');
+    const freeTesto      = get('free_testosterone');
+    const dheas          = get('dheas');
+    const shbg           = get('shbg');
+    const hba1c          = get('hba1c');
+
+    if (fastingInsulin && (fastingInsulin.status === STATUS.CRITICAL || fastingInsulin.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'high',
+        icon: '📊',
+        title: `Fasting Insulin is ${r(fastingInsulin.value)} — Insulin Resistance Is Likely Driving Your PCOS`,
+        detail: `Your fasting insulin of ${r(fastingInsulin.value)} uIU/mL is above the ideal level of 8. Insulin resistance is the core problem in most PCOS cases — when insulin is too high, it signals your ovaries to make more testosterone, which disrupts ovulation, causes acne and hair changes, and makes weight loss much harder. Combined with Hashimoto's, high insulin also drives more inflammation. What to do: (1) Start myo-inositol + d-chiro-inositol (often sold as a 40:1 blend) — this supplement has been well-studied for PCOS and works similarly to metformin without the side effects. A common dose is 2,000–4,000 mg per day. (2) Cut out refined carbs and added sugar — white bread, white rice, sweets, and juice are the biggest blood sugar drivers. (3) Add protein to every meal — it blunts the blood sugar spike from carbs. (4) Walk for 10 minutes after meals — even a short walk after eating significantly reduces insulin spikes.`,
+      });
+    }
+
+    if (hba1c && (hba1c.status === STATUS.CRITICAL || hba1c.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: hba1c.status === STATUS.CRITICAL ? 'high' : 'medium',
+        icon: '🍬',
+        title: `HbA1c is ${r(hba1c.value)}% — Your 3-Month Blood Sugar Average Is Too High`,
+        detail: `Your HbA1c of ${r(hba1c.value)}% shows that your blood sugar has been running higher than ideal over the past 3 months. This feeds insulin resistance, which drives PCOS hormones up and worsens Hashimoto's inflammation — it's a feedback loop. What to do: (1) Swap refined carbs for whole foods — brown rice instead of white, vegetables instead of bread where you can. (2) Never eat carbs alone — always pair them with protein or fat to slow the blood sugar rise. (3) Consider myo-inositol (2,000–4,000 mg/day) — it directly improves how your cells respond to insulin. (4) Ask your doctor whether your level warrants a prescription — at ${r(hba1c.value)}%, it's worth a conversation. (5) Retest in 3 months.`,
+      });
+    }
+
+    if (freeTesto && (freeTesto.status === STATUS.CRITICAL || freeTesto.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'high',
+        icon: '📉',
+        title: `Free Testosterone is ${r(freeTesto.value)} — This Is Driving Your PCOS Symptoms`,
+        detail: `Your free testosterone of ${r(freeTesto.value)} pg/mL is above the ideal of 2.2. This elevated testosterone is what drives the most visible PCOS symptoms — acne, extra facial or body hair, thinning hair on your scalp, and irregular periods. High insulin is the main thing pushing your testosterone up. What to do: (1) Reducing insulin (through diet, inositol supplementation, and exercise) is the most effective long-term approach. (2) Spearmint tea — 2 cups per day — has been shown in studies to lower androgen levels in women with PCOS. (3) Ask your doctor to also test your SHBG — low SHBG makes the same amount of testosterone cause more symptoms.`,
+      });
+    }
+
+    if (shbg && shbg.status === STATUS.CONCERN && shbg.direction === 'low') {
+      takeaways.push({
+        priority: 'medium',
+        icon: '🔓',
+        title: `SHBG is ${r(shbg.value)} — More Free Hormones Are Active Than Your Numbers Suggest`,
+        detail: `Your SHBG of ${r(shbg.value)} nmol/L is below the ideal range. SHBG is like a "cage" that holds sex hormones in your blood — when it's low, more testosterone (and other hormones) are free and active, even if your total testosterone number looks normal. Low SHBG is directly caused by high insulin. As you bring insulin levels down through diet and supplementation, SHBG naturally rises and hormone symptoms improve.`,
+      });
+    }
+
+    if (dheas && (dheas.status === STATUS.CRITICAL || dheas.status === STATUS.CONCERN) && dheas.direction === 'high') {
+      takeaways.push({
+        priority: 'medium',
+        icon: '😤',
+        title: `DHEA-S is ${r(dheas.value)} — Your Adrenal Glands May Be the Source of Your Androgens`,
+        detail: `Your elevated DHEA-S of ${r(dheas.value)} ug/dL suggests your adrenal glands — not your ovaries — may be producing too many androgens. This is called "adrenal PCOS" and it responds to different treatment. The most common cause is chronic stress and poor sleep. What to do: (1) Focus on stress reduction — this isn't optional. Cortisol directly tells your adrenal glands to produce more DHEA-S. (2) Prioritize 7–9 hours of sleep — even one week of poor sleep measurably raises adrenal androgens. (3) Tell your doctor specifically that your DHEA-S is elevated — this changes the treatment approach compared to ovarian PCOS.`,
+      });
+    }
+
+    // Hashimoto's + PCOS amplification note
+    const hasPcosResults = [fastingInsulin, freeTesto, shbg, hba1c, dheas].some(
+      r => r && r.status !== STATUS.OPTIMAL && r.status !== STATUS.UNKNOWN
+    );
+    if (hasPcosResults && (tpoAb || tgAb || tsh)) {
+      takeaways.push({
+        priority: 'medium',
+        icon: '🔁',
+        title: "Hashimoto's and PCOS Amplify Each Other — Treating Both Together Matters",
+        detail: "These two conditions share the same root problem: chronic inflammation and immune system imbalance. High insulin from PCOS drives more inflammation, which makes Hashimoto's worse. Thyroid dysfunction slows your metabolism, which makes insulin resistance worse. That's why people with both conditions often feel like they can't get either under control — they need to be treated together. Combining thyroid optimization with insulin management (diet, inositol, exercise) is far more effective than treating them separately.",
+      });
+    }
+  }
+
+  // ─── Fertility-specific takeaways ────────────────────────────────────────────
+  if (isFertility) {
+    const folate = get('folate');
+
+    if (folate && (folate.status === STATUS.CRITICAL || folate.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🌿',
+        title: `Folate is ${r(folate.value)} — Critical to Raise Before Conception`,
+        detail: `Folate is one of the most important nutrients to have topped up before you get pregnant. The baby's neural tube (which becomes the brain and spinal cord) forms in the first 28 days — often before you even know you're pregnant. Low folate raises the risk of neural tube defects and early miscarriage. What to do: (1) Start a prenatal vitamin now — not when you get pregnant, now. (2) Look for one that says "methylfolate" or "5-MTHF" on the label, not just "folic acid." Methylfolate is already in the form your body can use. A lot of people have trouble converting regular folic acid — methylfolate bypasses this step. (3) Aim to get your levels up at least 3 months before trying to conceive. (4) Also make sure your B12 is good — folate and B12 work together.`,
+      });
+    }
+
+    // Always suggest starting a prenatal in fertility mode
+    if (!tpoAb && !tgAb) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🔬',
+        title: 'Get TPO and TG Antibodies Tested Before Trying to Conceive',
+        detail: "Thyroid antibodies should be checked before any pregnancy attempt — they're a significant miscarriage risk factor that many doctors don't routinely test. Ask specifically for \"TPO antibodies and TG antibodies\" at your next blood draw.",
+      });
+    }
+  }
+
+  // ─── "Consider testing" prompts for missing key markers ──────────────────────
+  if (tsh && !ft3) {
+    takeaways.push({
+      priority: 'medium',
+      icon: '🔬',
+      title: 'You Should Also Be Testing Free T3',
+      detail: `You have a TSH result but no Free T3. This matters because TSH can look perfectly normal while your Free T3 — the hormone your body actually runs on — is too low. This is one of the most common reasons people with Hashimoto's still feel terrible even when their doctor says everything looks fine. At your next appointment, ask to add: Free T3, Free T4, and Reverse T3 to your blood work.`,
+    });
+  }
+
+  if ((tsh || ft3 || ft4) && !tpoAb && !tgAb && !isFertility) {
+    takeaways.push({
+      priority: 'medium',
+      icon: '🔬',
+      title: "You Haven't Tested Your Thyroid Antibodies Yet",
+      detail: "You have thyroid hormone results but no antibody numbers. Antibodies are what actually confirm whether your thyroid problem is autoimmune (Hashimoto's) and show how actively your immune system is attacking. Many doctors only check TSH and never look at antibodies, leaving the root cause undiagnosed. Ask your doctor specifically for: \"TPO antibodies and Thyroglobulin antibodies.\"",
+    });
+  }
+
+  // ─── Multiple nutrient deficiencies compound each other ───────────────────────
+  const lowNutrients = [ferritin, vitd, b12].filter(r => r && (r.status === STATUS.CRITICAL || r.status === STATUS.CONCERN));
+  if (lowNutrients.length >= 2 && !takeaways.find(t => t.title.includes('Two Are Connected'))) {
+    takeaways.push({
+      priority: 'medium',
+      icon: '🧩',
+      title: `${lowNutrients.length} Nutrients Are Low — They Make Each Other Worse`,
+      detail: `Your ${lowNutrients.map(r => r.marker.name).join(', ')} are all low — and these don't just cause problems separately, they pile on top of each other. Low ferritin makes it harder to convert thyroid hormone. Low Vitamin D makes your immune system more aggressive. Low B12 drains your energy and affects your brain. Fixing all of them at once — rather than one at a time — often leads to a noticeable improvement in how you feel, even before any thyroid medication changes.`,
+    });
+  }
+
+  // ─── All optimal ──────────────────────────────────────────────────────────────
+  if (critical.length === 0 && concerns.length === 0 && results.length > 0) {
+    takeaways.push({
+      priority: 'good',
+      icon: '✅',
+      title: 'Your Labs Look Well-Controlled — Keep It Up',
+      detail: "All of your results are in the ideal range. That's genuinely great news. Keep checking in regularly — Hashimoto's can shift during stressful periods, illness, pregnancy, or major life changes. If you're on medication, retest every 6–12 months, or sooner if you start feeling off.",
+    });
+  }
+
+  return takeaways;
+}
+
+// Generate the 3 most important concrete next steps from lab results.
+export function generateTopActions(results, perspective) {
+  const candidates = [];
+
+  const get = (id) => results.find(r => r.marker.id === id);
+  const tsh      = get('tsh');
+  const ft3      = get('ft3');
+  const ft4      = get('ft4');
+  const rt3      = get('rt3');
+  const tpoAb    = get('tpo_ab');
+  const tgAb     = get('tg_ab');
+  const vitd     = get('vitd');
+  const ferritin = get('ferritin');
+  const b12      = get('b12');
+  const crp      = get('crp');
+
+  const isFertility = perspective?.id === 'fertility';
+  const isPcos      = perspective?.id === 'pcos';
+
+  // ── Doctor / medication actions ─────────────────────────────────────────────
+  if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'high') {
+    candidates.push({
+      weight: 100,
+      label: 'Call Your Doctor',
+      title: `Contact your doctor about your TSH of ${r(tsh.value)}`,
+      detail: `A TSH above 4.0 requires prompt medical attention — you likely need to start or increase thyroid medication.${isFertility ? ' Tell them you are trying to conceive — this makes it even more urgent.' : ''}`,
+    });
+  }
+
+  if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'low') {
+    candidates.push({
+      weight: 100,
+      label: 'Call Your Doctor',
+      title: `Contact your doctor about your TSH of ${r(tsh.value)}`,
+      detail: 'TSH below 0.4 suggests over-medication — your doctor needs to review and likely reduce your dose.',
+    });
+  }
+
+  // Fertility: TSH above 2.5 is high-priority even if not CRITICAL
+  if (isFertility && tsh && tsh.value > 2.5 && tsh.status !== STATUS.CRITICAL) {
+    candidates.push({
+      weight: 98,
+      label: 'Call Your Doctor',
+      title: "Tell your doctor you're trying to conceive — TSH must be under 2.5",
+      detail: `Your TSH of ${r(tsh.value)} is above the fertility target of 2.5. Say the words "I am trying to conceive" — this changes the treatment threshold your doctor should be working toward.`,
+    });
+  }
+
+  if (
+    ft3 && (ft3.status === STATUS.CRITICAL || ft3.status === STATUS.CONCERN) &&
+    ft4 && ft4.status !== STATUS.CRITICAL &&
+    tsh && tsh.status !== STATUS.CRITICAL
+  ) {
+    candidates.push({
+      weight: 90,
+      label: 'Ask Your Doctor',
+      title: 'Ask your doctor about T3 medication at your next appointment',
+      detail: `Your Free T3 of ${r(ft3.value)} suggests your body isn't converting thyroid hormone properly — ask about adding T3 medication (called liothyronine or Cytomel) or switching to a natural thyroid medication like Armour Thyroid.`,
+    });
+  }
+
+  if (tsh && tsh.status === STATUS.CONCERN && tsh.direction === 'high' && !isFertility) {
+    candidates.push({
+      weight: 70,
+      label: 'Ask Your Doctor',
+      title: 'Ask your doctor about adjusting your medication dose',
+      detail: `Your TSH of ${r(tsh.value)} is higher than the ideal range of 1–2.5 for Hashimoto's — bring a list of your symptoms and ask whether a small dose increase makes sense.`,
+    });
+  }
+
+  if (tpoAb && tpoAb.status === STATUS.CRITICAL) {
+    if (isFertility) {
+      candidates.push({
+        weight: 95,
+        label: 'Ask Your Doctor',
+        title: 'Ask your OB about TPO antibodies and miscarriage risk',
+        detail: `High TPO antibodies are a significant miscarriage risk factor — ask your OB about monitoring your thyroid every 4–6 weeks once pregnant and whether low-dose thyroid medication before conception is appropriate.`,
+      });
+    } else {
+      candidates.push({
+        weight: 85,
+        label: 'Ask Your Doctor',
+        title: 'Ask your doctor about selenium and Low Dose Naltrexone (LDN)',
+        detail: `With antibodies at ${r(tpoAb.value)}, ask your doctor to recommend a selenium supplement (200 mcg/day — look for "selenomethionine" on the label) and whether LDN might be right for you.`,
+      });
+    }
+  }
+
+  // ── PCOS actions ────────────────────────────────────────────────────────────
+  if (isPcos) {
+    const fastingInsulin = get('fasting_insulin');
+    const freeTesto      = get('free_testosterone');
+    const hba1c          = get('hba1c');
+
+    if (fastingInsulin && (fastingInsulin.status === STATUS.CRITICAL || fastingInsulin.status === STATUS.CONCERN)) {
+      candidates.push({
+        weight: 92,
+        label: 'Start Today',
+        title: 'Start myo-inositol + d-chiro-inositol (40:1 blend), 2,000–4,000 mg/day',
+        detail: `Your fasting insulin of ${r(fastingInsulin.value)} points to insulin resistance — this supplement is the most studied natural treatment for PCOS and lowers insulin without side effects.`,
+        products: [
+          { role: 'Best quality', name: 'Ovasitol Inositol Powder (40:1 blend)', url: amz('ovasitol inositol powder 40:1') },
+          { role: 'Lowest price', name: 'Wholesome Story Myo-Inositol + D-Chiro', url: amz('wholesome story myo inositol d-chiro inositol') },
+        ],
+      });
+    }
+
+    if (hba1c && (hba1c.status === STATUS.CRITICAL || hba1c.status === STATUS.CONCERN)) {
+      candidates.push({
+        weight: 88,
+        label: 'Change Your Diet',
+        title: 'Cut refined carbs and always eat protein with every meal',
+        detail: `Your HbA1c of ${r(hba1c.value)}% shows blood sugar running high — removing white bread, white rice, and sugary drinks while adding protein to every meal is the fastest way to bring it down.`,
+      });
+    }
+
+    if (freeTesto && (freeTesto.status === STATUS.CRITICAL || freeTesto.status === STATUS.CONCERN)) {
+      candidates.push({
+        weight: 75,
+        label: 'Start Today',
+        title: 'Drink 2 cups of spearmint tea daily to lower androgen levels',
+        detail: `Your free testosterone of ${r(freeTesto.value)} is driving PCOS symptoms — studies show spearmint tea at this dose noticeably lowers androgens in women with PCOS within 30 days.`,
+        products: [
+          { role: 'Best quality', name: 'Traditional Medicinals Organic Spearmint Tea', url: amz('traditional medicinals organic spearmint tea') },
+          { role: 'Lowest price', name: 'Bigelow Spearmint Herbal Tea', url: amz('bigelow spearmint herbal tea') },
+        ],
+      });
+    }
+  }
+
+  // ── Fertility actions ───────────────────────────────────────────────────────
+  if (isFertility) {
+    const folate = get('folate');
+
+    if (folate && (folate.status === STATUS.CRITICAL || folate.status === STATUS.CONCERN)) {
+      candidates.push({
+        weight: 92,
+        label: 'Start Today',
+        title: "Start a prenatal vitamin with methylfolate — not regular folic acid",
+        detail: `Your folate is low and the baby's neural tube forms in the first 28 days of pregnancy. Start a prenatal with methylfolate (look for "5-MTHF" on the label) now — at least 3 months before trying.`,
+        products: [
+          { role: 'Best quality', name: 'Thorne Basic Prenatal (with methylfolate)', url: amz('thorne basic prenatal methylfolate') },
+          { role: 'Lowest price', name: 'Garden of Life mykind Organics Prenatal', url: amz('garden of life mykind organics prenatal methylfolate') },
+        ],
+      });
+    } else {
+      candidates.push({
+        weight: 78,
+        label: 'Start Today',
+        title: "Start a prenatal vitamin with methylfolate now — before you're pregnant",
+        detail: "The baby's neural tube forms before most people know they're pregnant — start a prenatal with methylfolate (5-MTHF on the label, not just folic acid) at least 3 months before trying to conceive.",
+        products: [
+          { role: 'Best quality', name: 'Thorne Basic Prenatal (with methylfolate)', url: amz('thorne basic prenatal methylfolate') },
+          { role: 'Lowest price', name: 'Garden of Life mykind Organics Prenatal', url: amz('garden of life mykind organics prenatal methylfolate') },
+        ],
+      });
+    }
+  }
+
+  // ── High-leverage supplement actions ────────────────────────────────────────
+  const vitdLow = vitd && (vitd.status === STATUS.CRITICAL || vitd.status === STATUS.CONCERN);
+  const hasHighAb = (tpoAb && tpoAb.status !== STATUS.OPTIMAL) || (tgAb && tgAb.status !== STATUS.OPTIMAL);
+
+  if (vitdLow && hasHighAb) {
+    const dose = vitd.value < 30 ? '5,000–10,000 IU' : '2,000–5,000 IU';
+    candidates.push({
+      weight: 88,
+      label: 'Start Today',
+      title: `Start Vitamin D3 + K2 — ${dose} D3 with 100–200 mcg K2 daily`,
+      detail: `Your Vitamin D of ${r(vitd.value)} combined with high antibodies is the most impactful thing you can fix right now — getting your Vitamin D up directly lowers antibody levels. Take it with a meal that has some fat in it.`,
+      products: [
+        { role: 'Best quality', name: 'Thorne Vitamin D/K2 Liquid', url: amz('thorne vitamin d k2 liquid') },
+        { role: 'Lowest price', name: 'NatureWise Vitamin D3+K2 2000IU', url: amz('naturewise vitamin d3 k2 supplement') },
+      ],
+    });
+  } else if (vitdLow) {
+    const dose = vitd.value < 30 ? '5,000–10,000 IU' : '2,000–5,000 IU';
+    candidates.push({
+      weight: isFertility ? 85 : 72,
+      label: 'Start Today',
+      title: `Start Vitamin D3 + K2 — ${dose} D3 with 100–200 mcg K2 daily`,
+      detail: `Your Vitamin D of ${r(vitd.value)} is below where it needs to be${isFertility ? ' for fertility and a healthy pregnancy' : ''} — take with a meal containing fat for best absorption and retest in 8–12 weeks.`,
+      products: [
+        { role: 'Best quality', name: 'Thorne Vitamin D/K2 Liquid', url: amz('thorne vitamin d k2 liquid') },
+        { role: 'Lowest price', name: 'NatureWise Vitamin D3+K2 2000IU', url: amz('naturewise vitamin d3 k2 supplement') },
+      ],
+    });
+  }
+
+  if (tpoAb && tpoAb.status !== STATUS.OPTIMAL && !(vitdLow && hasHighAb)) {
+    candidates.push({
+      weight: 80,
+      label: 'Start Today',
+      title: 'Start selenium 200 mcg/day — look for "selenomethionine" on the label',
+      detail: `Studies show selenium at this dose can cut TPO antibody levels in half within 3 months. Make sure the label says "selenomethionine" — not selenite, which is a less effective form.`,
+      products: [
+        { role: 'Best quality', name: 'Thorne Selenomethionine 200mcg', url: amz('thorne selenomethionine 200mcg') },
+        { role: 'Lowest price', name: 'NOW Selenium Selenomethionine 200mcg', url: amz('now foods selenium selenomethionine 200mcg') },
+      ],
+    });
+  }
+
+  if (ferritin && (ferritin.status === STATUS.CRITICAL || ferritin.status === STATUS.CONCERN)) {
+    candidates.push({
+      weight: isFertility ? 85 : 75,
+      label: 'Start Today',
+      title: 'Start an iron supplement — look for "iron bisglycinate"',
+      detail: `Your ferritin of ${r(ferritin.value)} is too low${isFertility ? ' — needs to be 90+ before pregnancy' : ' for your thyroid to work well'}. Iron bisglycinate is the gentlest form — take it with Vitamin C and at least 4 hours away from your thyroid medication.`,
+      products: [
+        { role: 'Best quality', name: 'Thorne Iron Bisglycinate', url: amz('thorne iron bisglycinate supplement') },
+        { role: 'Lowest price', name: 'Sports Research Iron Bisglycinate', url: amz('sports research iron bisglycinate') },
+      ],
+    });
+  }
+
+  if (b12 && (b12.status === STATUS.CRITICAL || b12.status === STATUS.CONCERN)) {
+    candidates.push({
+      weight: 65,
+      label: 'Start Today',
+      title: 'Start B12 — 1,000 mcg/day, dissolved under your tongue',
+      detail: `Your B12 of ${r(b12.value)} is below ideal. Look for "methylcobalamin" on the label (not cyanocobalamin), and let the tablet dissolve under your tongue so it absorbs directly into your bloodstream.`,
+      products: [
+        { role: 'Best quality', name: 'Jarrow Methyl B-12 5000mcg Sublingual', url: amz('jarrow methyl b12 5000 sublingual lozenge') },
+        { role: 'Lowest price', name: 'NOW B-12 Methylcobalamin 1000mcg Sublingual', url: amz('now foods b12 methylcobalamin sublingual 1000mcg') },
+      ],
+    });
+  }
+
+  // ── Diet actions ─────────────────────────────────────────────────────────────
+  if (hasHighAb && crp && crp.status !== STATUS.OPTIMAL) {
+    candidates.push({
+      weight: 78,
+      label: 'Change Your Diet',
+      title: 'Cut out gluten completely for 3 months',
+      detail: `Your high antibodies and elevated inflammation (CRP ${r(crp.value)}) both point to gluten as a likely trigger — this means fully gluten-free, not just "less bread." Retest your antibodies after 3 months.`,
+    });
+  } else if (hasHighAb) {
+    candidates.push({
+      weight: 62,
+      label: 'Change Your Diet',
+      title: 'Cut out gluten completely for 3 months',
+      detail: 'Going fully gluten-free is the single best-studied diet change for lowering TPO antibodies. Commit to strict elimination — even small amounts can keep inflammation going — and retest at 3 months.',
+    });
+  }
+
+  // ── Lab testing gaps ─────────────────────────────────────────────────────────
+  if (tsh && !ft3) {
+    candidates.push({
+      weight: 68,
+      label: 'Get Tested',
+      title: 'Ask for Free T3 and Reverse T3 at your next blood draw',
+      detail: "TSH alone misses the most common Hashimoto's problem — your TSH can look normal while your active thyroid hormone (Free T3) is too low. Ask your doctor to add Free T3, Free T4, and Reverse T3.",
+    });
+  }
+
+  if ((tsh || ft3) && !tpoAb && !tgAb) {
+    candidates.push({
+      weight: isFertility ? 90 : 74,
+      label: 'Get Tested',
+      title: 'Ask for TPO and TG antibody tests',
+      detail: `These two tests confirm whether your thyroid problem is autoimmune and show how actively your immune system is attacking.${isFertility ? ' They are also important miscarriage risk markers — get them tested before trying to conceive.' : ' Most doctors only order TSH — you may have to ask for these specifically.'}`,
+    });
+  }
+
+  if (rt3 && rt3.status !== STATUS.OPTIMAL) {
+    candidates.push({
+      weight: 60,
+      label: 'Get Tested',
+      title: 'Do a home cortisol (stress hormone) test',
+      detail: `Your elevated Reverse T3 of ${r(rt3.value)} is often caused by high stress hormones. Ask your doctor about a home saliva test where you collect samples 4 times throughout one day — it shows how your cortisol rises and falls.`,
+    });
+  }
+
+  if (crp && crp.status === STATUS.CRITICAL) {
+    candidates.push({
+      weight: 66,
+      label: 'Get Tested',
+      title: "Ask your doctor to check for a stomach bacteria called H. pylori",
+      detail: `Your inflammation marker (CRP ${r(crp.value)}) is high — H. pylori is a very common stomach infection that silently drives inflammation in Hashimoto's patients and is completely treatable once found.`,
+    });
+  }
+
+  candidates.sort((a, b) => b.weight - a.weight);
+  return candidates.slice(0, 3);
+}
+
+export function sortByUrgency(results) {
+  const order = { [STATUS.CRITICAL]: 0, [STATUS.CONCERN]: 1, [STATUS.OPTIMAL]: 2 };
+  return [...results].sort((a, b) => {
+    const statusDiff = order[a.status] - order[b.status];
+    const priorityDiff = (a.marker.priority || 99) - (b.marker.priority || 99);
+    return statusDiff !== 0 ? statusDiff : priorityDiff;
+  });
+}
