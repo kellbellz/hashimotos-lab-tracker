@@ -107,35 +107,45 @@ function extractValue(rawLine) {
   return null;
 }
 
+// Helper: true for lines we should always skip in the lookahead window.
+function shouldSkipLine(line) {
+  if (!line) return true;
+  if (SKIP_LINE.test(line)) return true;
+  if (/^\d+\.?\d*\s*[-–]\s*\d+\.?\d*$/.test(line)) return true;   // ref range "0.40 - 4.50"
+  if (/^[a-z%\/]+$/i.test(line) && line.length < 12) return true;  // bare unit string
+  // Two or more bare numbers on one line = Epic chart axis labels like "30   97"
+  if (/^\d+\.?\d*(\s+\d+\.?\d*){1,}$/.test(line)) return true;
+  return false;
+}
+
 // After confirming an alias match on line `matchIdx`, look ahead up to `lookahead`
 // lines for the actual numeric result.  Handles Epic's multi-row table format where
 // the value (and sometimes the unit) are on separate lines from the test name.
+//
+// Two-pass strategy so that a labeled value ("Valor 15") anywhere in the window
+// beats a bare axis-label number ("97") that happens to appear first in the text.
 function extractNearby(lines, matchIdx, lookahead = 5) {
+  // Pass 1 — prefer lines where extractValue finds a labeled or unit-bearing value.
+  // This catches "Valor 15", "Result: 0.85", "15 ng/mL", etc.
   for (let offset = 0; offset <= lookahead; offset++) {
     const line = (lines[matchIdx + offset] || '').trim();
-    if (!line) continue;
-    if (SKIP_LINE.test(line)) continue;
-    // Skip pure ref-range lines "0.40 - 4.50"
-    if (/^\d+\.?\d*\s*[-–]\s*\d+\.?\d*$/.test(line)) continue;
-    // Skip lines that are only a unit string
-    if (/^[a-z%\/]+$/i.test(line) && line.length < 12) continue;
-
-    // Skip lines that are two or more bare numbers separated only by whitespace —
-    // these are Epic chart axis labels like "30   97" (range min / max).
-    // A line with a SINGLE number is still a valid bare value (handled below).
-    if (/^\d+\.?\d*(\s+\d+\.?\d*){1,}$/.test(line)) continue;
-
+    if (shouldSkipLine(line)) continue;
     const val = extractValue(line);
     if (val !== null) return val;
+  }
 
-    // Bare number — a line that is just a single number, possibly with a < or >
-    // Common in Epic where value and unit are in separate columns → separate lines
+  // Pass 2 — fall back to a bare single number only if no labeled value was found.
+  // Common in Epic where value and unit are in separate columns → separate lines.
+  for (let offset = 0; offset <= lookahead; offset++) {
+    const line = (lines[matchIdx + offset] || '').trim();
+    if (shouldSkipLine(line)) continue;
     const bareMatch = line.match(/^([<>]?\s*\d+\.?\d*)$/);
     if (bareMatch) {
       const num = parseFloat(bareMatch[1].replace(/[<>]/g, ''));
       if (!isNaN(num) && num >= 0 && num < 100000) return num;
     }
   }
+
   return null;
 }
 
