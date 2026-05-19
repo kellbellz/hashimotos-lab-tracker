@@ -83,8 +83,51 @@ export function generateTakeaways(results, perspective) {
   const critical = results.filter(r => r.status === STATUS.CRITICAL);
   const concerns = results.filter(r => r.status === STATUS.CONCERN);
 
-  const isFertility = perspective?.id === 'fertility';
-  const isPcos      = perspective?.id === 'pcos';
+  const isFertility   = perspective?.id === 'fertility';
+  const isPcos        = perspective?.id === 'pcos';
+  const isUndiagnosed = perspective?.id === 'undiagnosed';
+
+  // ─── Undiagnosed perspective ─────────────────────────────────────────────────
+  if (isUndiagnosed) {
+    // If antibodies are elevated: lead with diagnostic framing
+    if (tpoAb && (tpoAb.status === STATUS.CRITICAL || tpoAb.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🔍',
+        title: `TPO Antibodies Are ${r(tpoAb.value)} — This Strongly Suggests Hashimoto's`,
+        detail: `Elevated TPO antibodies are the defining marker of Hashimoto's thyroiditis — they confirm your immune system is producing antibodies that attack your own thyroid. This result doesn't mean you're dangerously ill, but it is a significant finding that deserves a real conversation with your doctor. What to do: (1) Book an appointment and say these words: "I have elevated TPO antibodies and I'd like to understand if I have Hashimoto's." (2) Ask for a complete thyroid panel if you haven't had one: TSH, Free T3, Free T4, and Reverse T3. (3) Ask about a thyroid ultrasound — it can show the characteristic changes that Hashimoto's causes to thyroid tissue. (4) Know that early diagnosis means you can start making lifestyle changes (diet, Vitamin D, selenium) now, before more thyroid tissue is affected.`,
+      });
+    }
+
+    if (tgAb && (tgAb.status === STATUS.CRITICAL || tgAb.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🔍',
+        title: `TG Antibodies Are ${r(tgAb.value)} — Another Sign of Possible Hashimoto's`,
+        detail: `Elevated TG (Thyroglobulin) antibodies are a second type of Hashimoto's antibody — they attack the protein your thyroid uses to make hormones. Some people have TG antibodies elevated without TPO antibodies, so it's important to test both. What to do: (1) Discuss this result specifically with your doctor — ask whether the combination of your thyroid hormone values and these antibodies points to Hashimoto's. (2) If you haven't had TPO antibodies tested, ask for that too — having both helps confirm the picture. (3) Ask for an ultrasound if your doctor hasn't ordered one yet.`,
+      });
+    }
+
+    // If no antibodies tested: make it the top priority
+    if (!tpoAb && !tgAb) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🔍',
+        title: "The Test That Can Answer Your Question: TPO and TG Antibodies",
+        detail: "TSH alone can't tell you whether you have Hashimoto's — it can look completely normal while Hashimoto's is actively damaging your thyroid. The tests that actually diagnose it are TPO antibodies (Anti-Thyroid Peroxidase) and TG antibodies (Anti-Thyroglobulin). Many doctors don't order these automatically. You may need to ask: \"I've been reading about Hashimoto's and I'd like to be tested for TPO and thyroglobulin antibodies — can we add these to my next blood draw?\" Most labs can run both from a single blood sample.",
+      });
+    }
+
+    // General Hashimoto's symptom education if TSH looks okay
+    if ((!tsh || tsh.status === STATUS.OPTIMAL) && (!tpoAb || tpoAb.status === STATUS.OPTIMAL)) {
+      takeaways.push({
+        priority: 'medium',
+        icon: '💡',
+        title: "Normal Labs Don't Always Rule Out Hashimoto's",
+        detail: "Hashimoto's is tricky — antibodies can be elevated for years, causing symptoms, before TSH or other hormone levels shift enough to be flagged as abnormal. If you're experiencing persistent fatigue, unexplained weight changes, brain fog, hair loss, feeling cold all the time, or mood shifts — even with 'normal' labs — it's worth specifically asking your doctor about Hashimoto's. Common symptoms that get dismissed: waking up exhausted after a full night's sleep, hair coming out in handfuls, feeling mentally slow or forgetful, and being sensitive to cold temperatures.",
+      });
+    }
+  }
 
   // ─── TSH out of standard range ──────────────────────────────────────────────
   if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'high') {
@@ -139,7 +182,7 @@ export function generateTakeaways(results, perspective) {
   }
 
   // ─── Elevated TPO Antibodies ─────────────────────────────────────────────────
-  if (tpoAb && (tpoAb.status === STATUS.CRITICAL || tpoAb.status === STATUS.CONCERN)) {
+  if (tpoAb && (tpoAb.status === STATUS.CRITICAL || tpoAb.status === STATUS.CONCERN) && !isUndiagnosed) {
     const xAboveOptimal = (tpoAb.value / 9).toFixed(1);
     const severity = tpoAb.status === STATUS.CRITICAL ? 'well above' : 'above';
 
@@ -161,7 +204,7 @@ export function generateTakeaways(results, perspective) {
   }
 
   // ─── Elevated TG Antibodies ───────────────────────────────────────────────────
-  if (tgAb && (tgAb.status === STATUS.CRITICAL || tgAb.status === STATUS.CONCERN)) {
+  if (tgAb && (tgAb.status === STATUS.CRITICAL || tgAb.status === STATUS.CONCERN) && !isUndiagnosed) {
     takeaways.push({
       priority: 'high',
       icon: '🛡️',
@@ -350,7 +393,7 @@ export function generateTakeaways(results, perspective) {
     });
   }
 
-  if ((tsh || ft3 || ft4) && !tpoAb && !tgAb && !isFertility) {
+  if ((tsh || ft3 || ft4) && !tpoAb && !tgAb && !isFertility && !isUndiagnosed) {
     takeaways.push({
       priority: 'medium',
       icon: '🔬',
@@ -399,8 +442,9 @@ export function generateTopActions(results, perspective) {
   const b12      = get('b12');
   const crp      = get('crp');
 
-  const isFertility = perspective?.id === 'fertility';
-  const isPcos      = perspective?.id === 'pcos';
+  const isFertility   = perspective?.id === 'fertility';
+  const isPcos        = perspective?.id === 'pcos';
+  const isUndiagnosed = perspective?.id === 'undiagnosed';
 
   // ── Doctor / medication actions ─────────────────────────────────────────────
   if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'high') {
@@ -471,6 +515,51 @@ export function generateTopActions(results, perspective) {
     }
   }
 
+  // ── Undiagnosed actions ─────────────────────────────────────────────────────
+  if (isUndiagnosed) {
+    if (!tpoAb && !tgAb) {
+      candidates.push({
+        weight: 100,
+        label: 'Get Tested',
+        title: 'Ask for TPO and TG antibody tests at your next blood draw',
+        detail: "These two tests are the only way to confirm Hashimoto's — TSH alone can't tell you. Ask your doctor to add \"TPO antibodies and thyroglobulin antibodies\" to your next blood draw.",
+      });
+    }
+
+    if (tpoAb && tpoAb.status !== STATUS.OPTIMAL) {
+      candidates.push({
+        weight: 98,
+        label: 'Ask Your Doctor',
+        title: "Tell your doctor about your elevated antibodies and ask about Hashimoto's",
+        detail: `Your TPO antibodies of ${r(tpoAb.value)} are elevated — come prepared to ask: "Could I have Hashimoto's thyroiditis based on these results, and what should we do next?"`,
+      });
+      candidates.push({
+        weight: 80,
+        label: 'Ask Your Doctor',
+        title: 'Ask for a thyroid ultrasound',
+        detail: "An ultrasound can show the characteristic texture changes that Hashimoto's causes to thyroid tissue — it's painless and gives your doctor important diagnostic information.",
+      });
+    }
+
+    if (tsh && (tsh.status === STATUS.CRITICAL || tsh.status === STATUS.CONCERN) && tsh.direction === 'high') {
+      candidates.push({
+        weight: 92,
+        label: 'Ask Your Doctor',
+        title: `Ask about Hashimoto's — your TSH of ${r(tsh.value)} is above the ideal range`,
+        detail: "Hashimoto's is the most common reason TSH runs high in women. Ask specifically for TPO and TG antibody tests to confirm or rule it out.",
+      });
+    }
+
+    if (tsh && !ft3) {
+      candidates.push({
+        weight: 85,
+        label: 'Get Tested',
+        title: 'Ask for a complete panel: Free T3, Free T4, and Reverse T3',
+        detail: "TSH is just a screening test — Free T3, Free T4, and Reverse T3 show how well your thyroid is actually functioning. Many doctors only run TSH, but the full picture matters for diagnosis.",
+      });
+    }
+  }
+
   // ── PCOS actions ────────────────────────────────────────────────────────────
   if (isPcos) {
     const fastingInsulin = get('fasting_insulin');
@@ -485,7 +574,7 @@ export function generateTopActions(results, perspective) {
         detail: `Your fasting insulin of ${r(fastingInsulin.value)} points to insulin resistance — this supplement is the most studied natural treatment for PCOS and lowers insulin without side effects.`,
         products: [
           { role: 'Best quality', name: 'Ovasitol Inositol Powder (40:1 blend)', url: amz('ovasitol inositol powder 40:1') },
-          { role: 'Lowest price', name: 'Wholesome Story Myo-Inositol + D-Chiro', url: amz('wholesome story myo inositol d-chiro inositol') },
+          { role: 'Best value', name: 'Wholesome Story Myo-Inositol + D-Chiro', url: amz('wholesome story myo inositol d-chiro inositol') },
         ],
       });
     }
@@ -507,7 +596,7 @@ export function generateTopActions(results, perspective) {
         detail: `Your free testosterone of ${r(freeTesto.value)} is driving PCOS symptoms — studies show spearmint tea at this dose noticeably lowers androgens in women with PCOS within 30 days.`,
         products: [
           { role: 'Best quality', name: 'Traditional Medicinals Organic Spearmint Tea', url: amz('traditional medicinals organic spearmint tea') },
-          { role: 'Lowest price', name: 'Bigelow Spearmint Herbal Tea', url: amz('bigelow spearmint herbal tea') },
+          { role: 'Best value', name: 'Bigelow Spearmint Herbal Tea', url: amz('bigelow spearmint herbal tea') },
         ],
       });
     }
@@ -525,7 +614,7 @@ export function generateTopActions(results, perspective) {
         detail: `Your folate is low and the baby's neural tube forms in the first 28 days of pregnancy. Start a prenatal with methylfolate (look for "5-MTHF" on the label) now — at least 3 months before trying.`,
         products: [
           { role: 'Best quality', name: 'Thorne Basic Prenatal (with methylfolate)', url: amz('thorne basic prenatal methylfolate') },
-          { role: 'Lowest price', name: 'Garden of Life mykind Organics Prenatal', url: amz('garden of life mykind organics prenatal methylfolate') },
+          { role: 'Best value', name: 'Garden of Life mykind Organics Prenatal', url: amz('garden of life mykind organics prenatal methylfolate') },
         ],
       });
     } else {
@@ -536,7 +625,7 @@ export function generateTopActions(results, perspective) {
         detail: "The baby's neural tube forms before most people know they're pregnant — start a prenatal with methylfolate (5-MTHF on the label, not just folic acid) at least 3 months before trying to conceive.",
         products: [
           { role: 'Best quality', name: 'Thorne Basic Prenatal (with methylfolate)', url: amz('thorne basic prenatal methylfolate') },
-          { role: 'Lowest price', name: 'Garden of Life mykind Organics Prenatal', url: amz('garden of life mykind organics prenatal methylfolate') },
+          { role: 'Best value', name: 'Garden of Life mykind Organics Prenatal', url: amz('garden of life mykind organics prenatal methylfolate') },
         ],
       });
     }
@@ -555,7 +644,7 @@ export function generateTopActions(results, perspective) {
       detail: `Your Vitamin D of ${r(vitd.value)} combined with high antibodies is the most impactful thing you can fix right now — getting your Vitamin D up directly lowers antibody levels. Take it with a meal that has some fat in it.`,
       products: [
         { role: 'Best quality', name: 'Thorne Vitamin D/K2 Liquid', url: amz('thorne vitamin d k2 liquid') },
-        { role: 'Lowest price', name: 'NatureWise Vitamin D3+K2 2000IU', url: amz('naturewise vitamin d3 k2 supplement') },
+        { role: 'Best value', name: 'NatureWise Vitamin D3+K2 2000IU', url: amz('naturewise vitamin d3 k2 supplement') },
       ],
     });
   } else if (vitdLow) {
@@ -567,7 +656,7 @@ export function generateTopActions(results, perspective) {
       detail: `Your Vitamin D of ${r(vitd.value)} is below where it needs to be${isFertility ? ' for fertility and a healthy pregnancy' : ''} — take with a meal containing fat for best absorption and retest in 8–12 weeks.`,
       products: [
         { role: 'Best quality', name: 'Thorne Vitamin D/K2 Liquid', url: amz('thorne vitamin d k2 liquid') },
-        { role: 'Lowest price', name: 'NatureWise Vitamin D3+K2 2000IU', url: amz('naturewise vitamin d3 k2 supplement') },
+        { role: 'Best value', name: 'NatureWise Vitamin D3+K2 2000IU', url: amz('naturewise vitamin d3 k2 supplement') },
       ],
     });
   }
@@ -580,7 +669,7 @@ export function generateTopActions(results, perspective) {
       detail: `Studies show selenium at this dose can cut TPO antibody levels in half within 3 months. Make sure the label says "selenomethionine" — not selenite, which is a less effective form.`,
       products: [
         { role: 'Best quality', name: 'Thorne Selenomethionine 200mcg', url: amz('thorne selenomethionine 200mcg') },
-        { role: 'Lowest price', name: 'NOW Selenium Selenomethionine 200mcg', url: amz('now foods selenium selenomethionine 200mcg') },
+        { role: 'Best value', name: 'NOW Selenium Selenomethionine 200mcg', url: amz('now foods selenium selenomethionine 200mcg') },
       ],
     });
   }
@@ -593,7 +682,7 @@ export function generateTopActions(results, perspective) {
       detail: `Your ferritin of ${r(ferritin.value)} is too low${isFertility ? ' — needs to be 90+ before pregnancy' : ' for your thyroid to work well'}. Iron bisglycinate is the gentlest form — take it with Vitamin C and at least 4 hours away from your thyroid medication.`,
       products: [
         { role: 'Best quality', name: 'Thorne Iron Bisglycinate', url: amz('thorne iron bisglycinate supplement') },
-        { role: 'Lowest price', name: 'Sports Research Iron Bisglycinate', url: amz('sports research iron bisglycinate') },
+        { role: 'Best value', name: 'Sports Research Iron Bisglycinate', url: amz('sports research iron bisglycinate') },
       ],
     });
   }
@@ -606,7 +695,7 @@ export function generateTopActions(results, perspective) {
       detail: `Your B12 of ${r(b12.value)} is below ideal. Look for "methylcobalamin" on the label (not cyanocobalamin), and let the tablet dissolve under your tongue so it absorbs directly into your bloodstream.`,
       products: [
         { role: 'Best quality', name: 'Jarrow Methyl B-12 5000mcg Sublingual', url: amz('jarrow methyl b12 5000 sublingual lozenge') },
-        { role: 'Lowest price', name: 'NOW B-12 Methylcobalamin 1000mcg Sublingual', url: amz('now foods b12 methylcobalamin sublingual 1000mcg') },
+        { role: 'Best value', name: 'NOW B-12 Methylcobalamin 1000mcg Sublingual', url: amz('now foods b12 methylcobalamin sublingual 1000mcg') },
       ],
     });
   }

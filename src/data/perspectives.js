@@ -18,6 +18,14 @@ export const PERSPECTIVES = [
     },
   },
   {
+    id: 'undiagnosed',
+    name: "Could I Have Hashimoto's?",
+    emoji: '🔍',
+    description: "Explore if your results could be Hashimoto's",
+    additionalMarkerIds: [],
+    optimalOverrides: {},
+  },
+  {
     id: 'fertility',
     name: 'Trying to Conceive',
     emoji: '🌱',

@@ -70,30 +70,30 @@ export default function App() {
   const topActions = generateTopActions(allResults, perspective);
 
   const criticalCount = allResults.filter(r => r.status === STATUS.CRITICAL).length;
-  const concernCount = allResults.filter(r => r.status === STATUS.CONCERN).length;
-  const optimalCount = allResults.filter(r => r.status === STATUS.OPTIMAL).length;
-  const hasAnyValues = allResults.length > 0;
+  const concernCount  = allResults.filter(r => r.status === STATUS.CONCERN).length;
+  const optimalCount  = allResults.filter(r => r.status === STATUS.OPTIMAL).length;
+  const hasAnyValues  = allResults.length > 0;
 
   const visibleResults = showAllResults ? sorted : sorted.filter(r => r.status !== STATUS.OPTIMAL);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-stone-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-100 sticky top-0 z-10">
+      <header className="bg-white/90 backdrop-blur-sm border-b border-stone-100 sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center shadow-sm">
               <Activity className="w-4 h-4 text-white" />
             </div>
             <div>
-              <h1 className="font-semibold text-gray-900 leading-tight text-sm">Hashimoto's Lab Tracker</h1>
-              <p className="text-xs text-gray-400">All data stays on your device</p>
+              <h1 className="font-bold text-stone-800 leading-tight text-sm">Hashimoto's Lab Tracker</h1>
+              <p className="text-xs text-stone-400">All data stays on your device</p>
             </div>
           </div>
           {hasAnyValues && (
             <button
               onClick={handleClear}
-              className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-red-500 transition-colors"
+              className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-rose-400 transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Clear all
@@ -102,18 +102,18 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-3xl mx-auto px-4 py-8 space-y-5">
         {/* Hero */}
         {!hasAnyValues && (
-          <div className="text-center py-4">
-            <h2 className="text-2xl font-bold text-gray-900">Understand your Hashimoto's labs</h2>
-            <p className="text-gray-500 mt-2 max-w-lg mx-auto text-sm">
+          <div className="text-center py-6">
+            <h2 className="text-2xl font-bold text-stone-800">Understand your Hashimoto's labs</h2>
+            <p className="text-stone-500 mt-2 max-w-lg mx-auto text-sm leading-relaxed">
               Upload or enter your lab results to see which values are most concerning,
               what they mean for Hashimoto's, and what to discuss with your doctor.
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-xs text-gray-400">
+            <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-xs text-stone-400">
               <span className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-teal-500" />
+                <Shield className="w-3.5 h-3.5 text-teal-400" />
                 100% private — no data leaves your device
               </span>
               <span className="hidden sm:block">&bull;</span>
@@ -127,18 +127,18 @@ export default function App() {
 
         {/* Summary bar */}
         {hasAnyValues && (
-          <div className="bg-white rounded-xl border border-gray-100 p-4 flex flex-wrap items-center gap-6">
+          <div className="bg-white rounded-2xl border border-stone-100 p-4 flex flex-wrap items-center gap-6 shadow-sm">
             <div className="flex items-center gap-2">
               <StatusDot status={STATUS.CRITICAL} />
-              <span className="text-sm font-medium text-gray-700">{criticalCount} out of range</span>
+              <span className="text-sm font-semibold text-stone-700">{criticalCount} out of range</span>
             </div>
             <div className="flex items-center gap-2">
               <StatusDot status={STATUS.CONCERN} />
-              <span className="text-sm font-medium text-gray-700">{concernCount} below optimal</span>
+              <span className="text-sm font-semibold text-stone-700">{concernCount} below optimal</span>
             </div>
             <div className="flex items-center gap-2">
               <StatusDot status={STATUS.OPTIMAL} />
-              <span className="text-sm font-medium text-gray-700">{optimalCount} optimal</span>
+              <span className="text-sm font-semibold text-stone-700">{optimalCount} optimal</span>
             </div>
           </div>
         )}
@@ -149,7 +149,7 @@ export default function App() {
         {/* Key Takeaways */}
         {takeaways.length > 0 && (
           <section>
-            <h2 className="text-base font-semibold text-gray-800 mb-3">Key Takeaways</h2>
+            <h2 className="text-base font-bold text-stone-700 mb-3">Key Takeaways</h2>
             <Takeaways takeaways={takeaways} />
           </section>
         )}
@@ -157,7 +157,7 @@ export default function App() {
         {/* Results */}
         {hasAnyValues && (
           <section>
-            <h2 className="text-base font-semibold text-gray-800 mb-3">Your Lab Results</h2>
+            <h2 className="text-base font-bold text-stone-700 mb-3">Your Lab Results</h2>
             {visibleResults.length > 0 ? (
               <div className="space-y-3">
                 {visibleResults.map(result => (
@@ -165,14 +165,14 @@ export default function App() {
                 ))}
               </div>
             ) : (
-              <div className="bg-green-50 rounded-xl border border-green-100 p-4 text-center text-green-800 text-sm">
-                All entered values are within optimal range.
+              <div className="bg-emerald-50 rounded-2xl border border-emerald-100 p-5 text-center text-emerald-800 text-sm font-medium">
+                All entered values are within optimal range 🌿
               </div>
             )}
 
             {optimalCount > 0 && (
               <button
-                className="mt-3 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1 transition-colors"
+                className="mt-3 text-sm text-stone-400 hover:text-stone-600 flex items-center gap-1 transition-colors"
                 onClick={() => setShowAllResults(!showAllResults)}
               >
                 {showAllResults ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -183,20 +183,20 @@ export default function App() {
         )}
 
         {/* Input section */}
-        <section className="bg-white rounded-xl border border-gray-100 p-5 space-y-4">
+        <section className="bg-white rounded-2xl border border-stone-100 p-5 space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-semibold text-gray-800">
+            <h2 className="text-base font-bold text-stone-800">
               {hasAnyValues ? 'Add / Update Labs' : 'Enter Your Lab Results'}
             </h2>
-            <div className="flex rounded-lg border border-gray-200 overflow-hidden text-sm">
+            <div className="flex rounded-xl border border-stone-200 overflow-hidden text-sm">
               <button
-                className={`px-3 py-1.5 transition-colors ${inputMode === 'upload' ? 'bg-teal-500 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-1.5 font-semibold transition-colors ${inputMode === 'upload' ? 'bg-teal-500 text-white' : 'text-stone-500 hover:bg-stone-50'}`}
                 onClick={() => setInputMode('upload')}
               >
                 Upload
               </button>
               <button
-                className={`px-3 py-1.5 transition-colors ${inputMode === 'manual' ? 'bg-teal-500 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+                className={`px-3 py-1.5 font-semibold transition-colors ${inputMode === 'manual' ? 'bg-teal-500 text-white' : 'text-stone-500 hover:bg-stone-50'}`}
                 onClick={() => setInputMode('manual')}
               >
                 Manual
@@ -208,14 +208,14 @@ export default function App() {
             <>
               <UploadZone onParsed={handleParsed} />
               {showManual && (
-                <div className="pt-4 border-t border-gray-50">
-                  <p className="text-sm text-gray-500 mb-3">Review and correct parsed values:</p>
+                <div className="pt-4 border-t border-stone-50">
+                  <p className="text-sm text-stone-400 mb-3">Review and correct parsed values:</p>
                   <ManualEntry values={values} onChange={handleValueChange} perspective={perspective} />
                 </div>
               )}
               <button
-                className="text-sm text-gray-400 hover:text-gray-600 transition-colors"
-                onClick={() => { setInputMode('manual'); }}
+                className="text-sm text-stone-400 hover:text-stone-600 transition-colors"
+                onClick={() => setInputMode('manual')}
               >
                 Enter values manually instead →
               </button>
@@ -228,7 +228,7 @@ export default function App() {
         </section>
 
         {/* Disclaimer */}
-        <p className="text-xs text-gray-400 text-center pb-6">
+        <p className="text-xs text-stone-400 text-center pb-6 leading-relaxed">
           This tool is for educational purposes only and is not a substitute for medical advice.
           Reference ranges may vary by lab. Always discuss results with a qualified healthcare provider.
         </p>

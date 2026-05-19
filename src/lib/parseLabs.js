@@ -1,8 +1,8 @@
-import * as pdfjsLib from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.mjs?url';
 import { MARKERS } from '../data/markers.js';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 function normalize(str) {
   return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
@@ -13,7 +13,6 @@ function normalize(str) {
 // Flag codes: "01" (normal), "A, 02" (above), "B, 02" (below)
 function extractValue(rawLine) {
   // Strategy 1: LabCorp/Quest flag code pattern — most reliable
-  // Looks for "01" or "A, 02" etc. immediately followed by the actual result
   const flagMatch = rawLine.match(/\b(?:[A-Z],?\s*)?0[0-9]\b\s*([<>]?\s*\d+\.?\d*)/);
   if (flagMatch) {
     const raw = flagMatch[1].replace(/[<>]/g, '').trim();
@@ -30,17 +29,15 @@ function extractValue(rawLine) {
   }
 
   // Strategy 3: Clean the line and take the first plausible number.
-  // Only attempt if the line has known lab units (avoids false matches
-  // in ordered-items lists, headers, reference range footnotes, etc.)
   const hasUnits = /\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|g\/dL|ug\/dL|mcg\/dL|nmol\/L|mL\/min|%)\b/i.test(rawLine);
   if (hasUnits) {
     let cleaned = rawLine;
-    cleaned = cleaned.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, ' ');          // dates
-    cleaned = cleaned.replace(/\b\d{4}\b/g, ' ');                            // 4-digit years
-    cleaned = cleaned.replace(/\d+\.?\d*\s*[-–]\s*\d+\.?\d*/g, ' ');        // ref ranges X-Y
-    cleaned = cleaned.replace(/[<>]\s*\d+\.?\d*/g, ' ');                     // <N >N
+    cleaned = cleaned.replace(/\d{1,2}\/\d{1,2}\/\d{2,4}/g, ' ');
+    cleaned = cleaned.replace(/\b\d{4}\b/g, ' ');
+    cleaned = cleaned.replace(/\d+\.?\d*\s*[-–]\s*\d+\.?\d*/g, ' ');
+    cleaned = cleaned.replace(/[<>]\s*\d+\.?\d*/g, ' ');
     cleaned = cleaned.replace(/\b(High|Low|H|L|Abnormal|Normal|Critical)\b/gi, ' ');
-    cleaned = cleaned.replace(/\b[A-Z]?,?\s*0[0-9]\b/g, ' ');               // flag codes
+    cleaned = cleaned.replace(/\b[A-Z]?,?\s*0[0-9]\b/g, ' ');
     cleaned = cleaned.replace(/\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|g\/dL|ug\/dL|mcg\/dL|nmol\/L|mL\/min|%|ratio)\b/gi, ' ');
 
     const nums = [...cleaned.matchAll(/\b(\d+\.?\d*)\b/g)];
@@ -56,8 +53,7 @@ function extractValue(rawLine) {
   return null;
 }
 
-// Main parser: works line-by-line to avoid index-alignment bugs from normalization.
-// Joins adjacent lines to handle multi-line test names (e.g. LabCorp TPO across 2 lines).
+// Main parser: works line-by-line.
 export function parseTextForMarkers(rawText) {
   const found = {};
   const lines = rawText.split(/\r?\n/);
@@ -65,7 +61,6 @@ export function parseTextForMarkers(rawText) {
   for (const marker of MARKERS) {
     if (found[marker.id] !== undefined) continue;
 
-    // Longest aliases first — more specific matches win
     const sortedAliases = [...marker.aliases].sort((a, b) => b.length - a.length);
 
     for (const alias of sortedAliases) {
@@ -73,9 +68,6 @@ export function parseTextForMarkers(rawText) {
       let matched = false;
 
       for (let i = 0; i < lines.length; i++) {
-        // Join current + next line to catch split test names like:
-        //   "Thyroid Peroxidase (TPO)"
-        //   "Ab   01   63   High   23   ..."
         const rawWindow = lines[i] + ' ' + (lines[i + 1] || '');
         const normWindow = normalize(rawWindow);
 
@@ -96,33 +88,114 @@ export function parseTextForMarkers(rawText) {
   return found;
 }
 
-// Extract text from a PDF using pdf.js (client-side, no server needed)
-export async function extractTextFromPDF(file) {
-  const arrayBuffer = await file.arrayBuffer();
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+// Render a PDF page to a canvas and return it as a data URL for OCR.
+async function renderPageToDataUrl(page, scale = 2.0) {
+  const viewport = page.getViewport({ scale });
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d');
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return canvas.toDataURL('image/png');
+}
 
+// OCR fallback: render PDF pages to canvas, then run Tesseract on them.
+async function ocrPdfPages(pdf) {
+  const { createWorker } = await import('tesseract.js');
+  const worker = await createWorker('eng');
   let fullText = '';
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const content = await page.getTextContent();
-
-    // Preserve row breaks by detecting Y-position changes
-    let prevY = null;
-    let pageText = '';
-    for (const item of content.items) {
-      if ('str' in item) {
-        const y = item.transform?.[5];
-        if (prevY !== null && Math.abs(y - prevY) > 3) {
-          pageText += '\n';
-        }
-        pageText += item.str + ' ';
-        prevY = y;
-      }
+  const pageLimit = Math.min(pdf.numPages, 6); // cap at 6 pages for speed
+  try {
+    for (let i = 1; i <= pageLimit; i++) {
+      const page = await pdf.getPage(i);
+      const dataUrl = await renderPageToDataUrl(page);
+      const { data: { text } } = await worker.recognize(dataUrl);
+      fullText += text + '\n';
+      page.cleanup();
     }
-    fullText += pageText + '\n';
+  } finally {
+    await worker.terminate();
+  }
+  return fullText;
+}
+
+// Extract text from a PDF. Tries native text extraction first;
+// if that fails or yields no text (image-based / Epic PDF), falls back to canvas OCR.
+export async function extractTextFromPDF(file) {
+  let arrayBuffer;
+  try {
+    arrayBuffer = await file.arrayBuffer();
+  } catch {
+    throw new Error('Could not read the file. Please try again.');
   }
 
-  return fullText;
+  let pdf;
+  try {
+    pdf = await getDocument({
+      data: new Uint8Array(arrayBuffer),
+      disableFontFace: true,
+      isEvalSupported: false,
+      useSystemFonts: true,
+      stopAtErrors: false,
+    }).promise;
+  } catch (err) {
+    // Password-protected PDF
+    if (err?.name === 'PasswordException' || err?.message?.toLowerCase().includes('password')) {
+      throw new Error(
+        'This PDF is password-protected. Open it in Preview or Adobe Reader, print to PDF (without a password), then upload the new file.'
+      );
+    }
+    // Any other pdf.js load error — re-throw with a helpful message
+    console.warn('[LabParser] pdf.js load error, cannot attempt OCR fallback:', err);
+    throw new Error(
+      'This PDF format isn\'t supported. Try taking a screenshot of your lab results and uploading that as a JPG or PNG instead.'
+    );
+  }
+
+  // --- Attempt 1: native text extraction ---
+  try {
+    let fullText = '';
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent({ includeMarkedContent: false });
+
+      let prevY = null;
+      let pageText = '';
+      for (const item of content.items) {
+        if ('str' in item) {
+          const y = item.transform?.[5];
+          if (prevY !== null && Math.abs(y - prevY) > 3) {
+            pageText += '\n';
+          }
+          pageText += item.str + ' ';
+          prevY = y;
+        }
+      }
+      fullText += pageText + '\n';
+      page.cleanup();
+    }
+
+    if (fullText.trim().length >= 20) {
+      return fullText;
+    }
+
+    // Text was empty — image-based PDF, fall through to OCR
+    console.log('[LabParser] PDF has no extractable text — trying canvas OCR...');
+  } catch (err) {
+    // Text extraction threw (e.g. Epic XFA PDFs) — fall through to OCR
+    console.warn('[LabParser] Text extraction failed, trying canvas OCR:', err?.message);
+  }
+
+  // --- Attempt 2: canvas-based OCR ---
+  try {
+    const text = await ocrPdfPages(pdf);
+    return text;
+  } catch (ocrErr) {
+    console.error('[LabParser] Canvas OCR also failed:', ocrErr);
+    throw new Error(
+      'We couldn\'t read this PDF automatically. Try taking a screenshot of your lab results and uploading that as an image instead.'
+    );
+  }
 }
 
 // Extract text from an image using Tesseract.js (client-side OCR)

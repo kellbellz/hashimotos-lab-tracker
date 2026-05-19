@@ -1,7 +1,7 @@
 const priorityStyles = {
-  high: { wrapper: 'bg-red-50 border-red-200', title: 'text-red-900', detail: 'text-red-800' },
-  medium: { wrapper: 'bg-amber-50 border-amber-200', title: 'text-amber-900', detail: 'text-amber-800' },
-  good: { wrapper: 'bg-green-50 border-green-200', title: 'text-green-900', detail: 'text-green-800' },
+  high:   { wrapper: 'bg-rose-50 border-rose-100',     title: 'text-rose-900',    detail: 'text-rose-800' },
+  medium: { wrapper: 'bg-amber-50 border-amber-100',   title: 'text-amber-900',   detail: 'text-amber-800' },
+  good:   { wrapper: 'bg-emerald-50 border-emerald-100', title: 'text-emerald-900', detail: 'text-emerald-800' },
 };
 
 export function Takeaways({ takeaways }) {
@@ -12,12 +12,12 @@ export function Takeaways({ takeaways }) {
       {takeaways.map((t, i) => {
         const styles = priorityStyles[t.priority] || priorityStyles.medium;
         return (
-          <div key={i} className={`rounded-xl border p-4 ${styles.wrapper}`}>
-            <div className={`font-semibold flex items-center gap-2 ${styles.title}`}>
-              <span className="text-lg">{t.icon}</span>
+          <div key={i} className={`rounded-2xl border p-5 ${styles.wrapper}`}>
+            <div className={`font-bold flex items-center gap-2.5 text-sm leading-snug ${styles.title}`}>
+              <span className="text-xl">{t.icon}</span>
               {t.title}
             </div>
-            <p className={`text-sm mt-1.5 leading-relaxed ${styles.detail}`}>{t.detail}</p>
+            <p className={`text-sm mt-2 leading-relaxed ${styles.detail}`}>{t.detail}</p>
           </div>
         );
       })}
