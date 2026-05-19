@@ -21,7 +21,7 @@ function detectReportType(text) {
 }
 
 export function UploadZone({ onParsed }) {
-  const [status, setStatus] = useState('idle');
+  const [status, setStatus] = useState('idle');   // idle | processing | done | warning | error
   const [message, setMessage] = useState('');
   const [subMessage, setSubMessage] = useState('');
   const [rawText, setRawText] = useState('');
@@ -77,19 +77,18 @@ export function UploadZone({ onParsed }) {
         const reportType = detectReportType(text);
 
         if (reportType) {
-          setStatus('error');
-          setMessage(`This looks like a ${reportType} report — no thyroid markers found.`);
+          // Accepted — just no thyroid markers in this particular report
+          setStatus('warning');
+          setMessage(`Got your ${reportType} — no thyroid markers in this one.`);
           setSubMessage(
-            'Try uploading a report that includes thyroid labs like TSH, Free T4, Free T3, or TPO antibodies. ' +
-            'In Epic MyChart, look under "Test Results" for a report ordered by your endocrinologist or primary care doctor.'
+            'Upload your thyroid panel too to see your full picture. Look for a report that includes TSH, Free T4, Free T3, or TPO antibodies.'
           );
         } else {
           setRawText(text.trim().slice(0, 3000));
-          setStatus('error');
+          setStatus('warning');
           setMessage("Text was extracted but no thyroid lab values were recognized.");
           setSubMessage(
-            'Your report may use a format we haven\'t seen yet. Try entering your values manually using the form below, ' +
-            'or upload a screenshot of just the thyroid section of your results.'
+            'Your report may use a format we haven\'t seen yet. Try uploading your thyroid panel, or enter values manually below.'
           );
         }
         return;
@@ -174,11 +173,11 @@ export function UploadZone({ onParsed }) {
         </div>
       )}
 
-      {status === 'error' && (
+      {status === 'warning' && (
         <div className="space-y-2">
-          <div className="bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">
-            <p className="text-sm text-rose-700 font-semibold">{message}</p>
-            {subMessage && <p className="text-sm text-rose-600 mt-1 leading-relaxed">{subMessage}</p>}
+          <div className="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
+            <p className="text-sm text-amber-800 font-semibold">{message}</p>
+            {subMessage && <p className="text-sm text-amber-700 mt-1 leading-relaxed">{subMessage}</p>}
           </div>
 
           {rawText && (
@@ -190,7 +189,6 @@ export function UploadZone({ onParsed }) {
                 <span>View extracted text</span>
                 {showPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
               </button>
-
               {showPreview && (
                 <div className="border-t border-stone-200">
                   <div className="flex justify-end px-3 py-1.5 border-b border-stone-100">
@@ -209,6 +207,13 @@ export function UploadZone({ onParsed }) {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {status === 'error' && (
+        <div className="bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">
+          <p className="text-sm text-rose-700 font-semibold">{message}</p>
+          {subMessage && <p className="text-sm text-rose-600 mt-1 leading-relaxed">{subMessage}</p>}
         </div>
       )}
     </div>
