@@ -1,10 +1,13 @@
 import { useState, useRef } from 'react';
-import { FileText, Image, Loader2 } from 'lucide-react';
+import { FileText, Image, Loader2, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import { extractTextFromPDF, extractTextFromImage, parseTextForMarkers } from '../lib/parseLabs.js';
 
 export function UploadZone({ onParsed }) {
   const [status, setStatus] = useState('idle');
   const [message, setMessage] = useState('');
+  const [rawText, setRawText] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
 
@@ -19,7 +22,13 @@ export function UploadZone({ onParsed }) {
     }
 
     setStatus('processing');
-    setMessage(isPDF ? 'Reading your PDF — this may take up to 30 seconds…' : 'Running OCR on your image (this may take 15–30 seconds)...');
+    setRawText('');
+    setShowPreview(false);
+    setMessage(
+      isPDF
+        ? 'Reading your PDF — this may take up to 30 seconds…'
+        : 'Running OCR on your image (this may take 15–30 seconds)…'
+    );
 
     try {
       let text;
@@ -29,14 +38,14 @@ export function UploadZone({ onParsed }) {
         text = await extractTextFromImage(file);
       }
 
+      console.log('[LabParser] Extracted text length:', text.length);
       console.log('[LabParser] Full extracted text:\n', text);
-      console.log('[LabParser] Text length:', text.length);
 
       if (!text || text.trim().length < 20) {
         setStatus('error');
         setMessage(
           isPDF
-            ? 'Could not read text from this PDF. It may be a scanned image — try uploading a screenshot or photo of the results instead.'
+            ? 'Could not read text from this PDF. Try taking a screenshot of your results and uploading that as a JPG or PNG instead.'
             : 'Could not read text from this image. Try a clearer photo or enter values manually.'
         );
         return;
@@ -47,20 +56,23 @@ export function UploadZone({ onParsed }) {
       console.log('[LabParser] Parsed values:', parsed);
 
       if (count === 0) {
+        // Show the raw text so we can debug the format
+        setRawText(text.trim().slice(0, 3000));
         setStatus('error');
         setMessage(
-          "Text was extracted but no lab values were recognized. Your lab report may use a format we haven't seen — try entering values manually."
+          "Text was extracted but no lab values were recognized. Your lab report may use an unusual format — try entering values manually, or send us the extracted text below so we can add support for your lab."
         );
         return;
       }
 
+      setRawText('');
       setStatus('done');
       setMessage(`Found ${count} lab value${count !== 1 ? 's' : ''}. Review and correct anything that looks off.`);
       onParsed(parsed);
     } catch (err) {
       console.error('[LabParser] Error:', err);
       setStatus('error');
-      setMessage(`Error reading file: ${err?.message || 'unknown error'}. Try manual entry instead.`);
+      setMessage(err?.message || 'Something went wrong reading this file. Try manual entry instead.');
     }
   }
 
@@ -77,6 +89,16 @@ export function UploadZone({ onParsed }) {
     setDragOver(false);
     const file = e.dataTransfer.files?.[0];
     if (file) processFile(file);
+  }
+
+  async function handleCopy() {
+    try {
+      await navigator.clipboard.writeText(rawText);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignore
+    }
   }
 
   return (
@@ -119,8 +141,42 @@ export function UploadZone({ onParsed }) {
           <span>✓</span> {message}
         </div>
       )}
+
       {status === 'error' && (
-        <div className="text-sm text-rose-700 bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">{message}</div>
+        <div className="space-y-2">
+          <div className="text-sm text-rose-700 bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">
+            {message}
+          </div>
+
+          {rawText && (
+            <div className="rounded-xl border border-stone-200 bg-stone-50 overflow-hidden">
+              <button
+                className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-stone-600 hover:bg-stone-100 transition-colors"
+                onClick={() => setShowPreview(p => !p)}
+              >
+                <span>Show extracted text (for debugging)</span>
+                {showPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              </button>
+
+              {showPreview && (
+                <div className="border-t border-stone-200">
+                  <div className="flex justify-end px-3 py-1.5 border-b border-stone-100">
+                    <button
+                      onClick={handleCopy}
+                      className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-teal-600 transition-colors"
+                    >
+                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      {copied ? 'Copied!' : 'Copy all'}
+                    </button>
+                  </div>
+                  <pre className="px-3 py-2.5 text-xs text-stone-500 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto font-mono">
+                    {rawText}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
