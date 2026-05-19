@@ -16,7 +16,7 @@ export function TopActions({ actions }) {
   return (
     <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm">
       <div className="px-5 pt-5 pb-3">
-        <h2 className="text-base font-bold text-stone-800">Your Top 3 Next Steps</h2>
+        <h2 className="text-base font-bold text-stone-800">Your Top Next Steps</h2>
         <p className="text-xs text-stone-400 mt-0.5">Based on your most urgent results</p>
         <p className="text-xs text-stone-600 mt-2.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2.5 leading-relaxed">
           These are general recommendations based on your lab values — not medical advice. Always check with your doctor before starting a new supplement or changing your treatment, especially if you are pregnant or on medication.
