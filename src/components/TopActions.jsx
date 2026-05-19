@@ -44,22 +44,15 @@ export function TopActions({ actions }) {
                 {action.products?.length > 0 && (
                   <div className="mt-3">
                     <p className="text-xs font-semibold text-stone-400 mb-1.5">Where to get it:</p>
-                    <div className="flex flex-col sm:flex-row gap-2">
-                      {action.products.map((p, j) => (
-                        <a
-                          key={j}
-                          href={p.url}
-                          target="_blank"
-                          rel="noopener noreferrer sponsored"
-                          className="flex items-center gap-2 text-xs bg-stone-50 hover:bg-teal-50 border border-stone-200 hover:border-teal-200 rounded-xl px-3 py-2 transition-colors group"
-                        >
-                          <span className="font-bold text-stone-500 group-hover:text-teal-700 whitespace-nowrap">{p.role}</span>
-                          <span className="text-stone-300">—</span>
-                          <span className="text-stone-600 group-hover:text-teal-800 flex-1">{p.name}</span>
-                          <ExternalLink className="w-3 h-3 shrink-0 text-stone-300 group-hover:text-teal-400" />
-                        </a>
-                      ))}
-                    </div>
+                    <a
+                      href={action.products[0].url}
+                      target="_blank"
+                      rel="noopener noreferrer sponsored"
+                      className="inline-flex items-center gap-2 text-xs bg-stone-50 hover:bg-teal-50 border border-stone-200 hover:border-teal-200 rounded-xl px-3 py-2 transition-colors group"
+                    >
+                      <span className="text-stone-600 group-hover:text-teal-800">{action.products[0].name}</span>
+                      <ExternalLink className="w-3 h-3 shrink-0 text-stone-300 group-hover:text-teal-400" />
+                    </a>
                   </div>
                 )}
               </div>
