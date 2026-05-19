@@ -80,20 +80,20 @@ export default function App() {
     <div className="min-h-screen bg-stone-50">
       {/* Header */}
       <header className="bg-white/90 backdrop-blur-sm border-b border-stone-100 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center shadow-sm shrink-0">
               <Activity className="w-4 h-4 text-white" />
             </div>
-            <div>
-              <h1 className="font-bold text-stone-800 leading-tight text-sm">Hashimoto's Lab Tracker</h1>
+            <div className="min-w-0">
+              <h1 className="font-bold text-stone-800 leading-tight text-sm truncate">Hashimoto's Lab Tracker</h1>
               <p className="text-xs text-stone-400">All data stays on your device</p>
             </div>
           </div>
           {hasAnyValues && (
             <button
               onClick={handleClear}
-              className="flex items-center gap-1.5 text-xs text-stone-400 hover:text-rose-400 transition-colors"
+              className="shrink-0 flex items-center gap-1.5 text-xs text-stone-500 hover:text-rose-500 transition-colors border border-stone-200 hover:border-rose-200 rounded-lg px-2.5 py-1.5"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Clear all
