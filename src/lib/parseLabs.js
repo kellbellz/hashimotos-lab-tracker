@@ -37,7 +37,7 @@ const UNIT_PATTERN = /\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L
 
 // Lines that should be skipped when looking for a value near a matched test name.
 // Includes common status words in English + the 11 supported languages.
-const SKIP_LINE = /^(normal|abnormal|high|low|critical|final|preliminary|pending|in\s+range|out\s+of\s+range|reference\s+range|ref\s+range|units?|component|your\s+value|standard\s+range|flag|status|result\s+type|anormal|alto|baja|bajo|alta|cr[ii]tico|eleve|bas|critique|hoch|niedrig|kritisch|норма|нормально|высокий|низкий|正常|异常|高|低|정상|비정상|높음|낙음|طبيعي|مرتفع|منخفض|सामान्य|असामान्य)$/iu;
+const SKIP_LINE = /^(normal|abnormal|high|low|critical|final|preliminary|pending|in\s+range|out\s+of\s+range|reference\s+range|ref\s+range|units?|component|your\s+value|standard\s+range|flag|status|result\s+type|valor\s+normal|rango\s+de\s+referencia|rango\s+normal|valeur\s+normale|referenzbereich|normalwert|참고범위|正常範囲|anormal|alto|baja|bajo|alta|crítico|critico|eleve|bas|critique|hoch|niedrig|kritisch|норма|нормально|высокий|низкий|正常|异常|高|低|정상|비정상|높음|낮음|طبيعي|مرتفع|منخفض|सामान्य|असामान्य)$/iu;
 
 // Remove a reference range like "0.40 - 4.50" or "0.40-4.50" from a string.
 function stripRanges(str) {
@@ -60,11 +60,25 @@ function extractValue(rawLine) {
     if (!isNaN(num) && num >= 0) return num;
   }
 
-  // Strategy 2a: Explicit "Result: X", "Value: X", "Level: X"
-  const labelMatch = rawLine.match(/(?:result|value|level)[:\s]+([<>]?\s*\d+\.?\d*)/i);
+  // Strategy 2a: Explicit labelled value in any supported language.
+  // English: Result / Value / Level
+  // Spanish / Portuguese: Valor / Resultado
+  // French: Valeur / Résultat
+  // German: Wert / Ergebnis
+  // Russian: Значение / Результат
+  // Japanese: 値 / 結果
+  // Chinese: 值 / 结果
+  // Korean: 값 / 결과
+  // Arabic: القيمة / النتيجة
+  // Hindi: मूल्य / परिणाम
+  // NOTE: "Valor normal" / "Valeur normale" / "Wert normal" etc. won't match
+  // because the number pattern fails when the next token is a word, not a digit.
+  const labelMatch = rawLine.match(
+    /(?:result|value|level|valor|resultado|valeur|r[eé]sultat|wert|ergebnis|значение|результат|值|结果|값|결과|القيمة|النتيجة|मूल्य|परिणाम)[:\s]+([<>]?\s*\d+\.?\d*)/iu
+  );
   if (labelMatch) {
     const num = parseFloat(labelMatch[1].replace(/[<>]/g, ''));
-    if (!isNaN(num)) return num;
+    if (!isNaN(num) && !isNaN(num)) return num;
   }
 
   // Strategy 2b: Colon-separated "Test Name: 2.35 mIU/L" — Epic & hospital portals
@@ -106,10 +120,15 @@ function extractNearby(lines, matchIdx, lookahead = 5) {
     // Skip lines that are only a unit string
     if (/^[a-z%\/]+$/i.test(line) && line.length < 12) continue;
 
+    // Skip lines that are two or more bare numbers separated only by whitespace —
+    // these are Epic chart axis labels like "30   97" (range min / max).
+    // A line with a SINGLE number is still a valid bare value (handled below).
+    if (/^\d+\.?\d*(\s+\d+\.?\d*){1,}$/.test(line)) continue;
+
     const val = extractValue(line);
     if (val !== null) return val;
 
-    // Bare number — a line that is just a number, possibly with a < or >
+    // Bare number — a line that is just a single number, possibly with a < or >
     // Common in Epic where value and unit are in separate columns → separate lines
     const bareMatch = line.match(/^([<>]?\s*\d+\.?\d*)$/);
     if (bareMatch) {
