@@ -383,6 +383,58 @@ export function generateTakeaways(results, perspective) {
     }
   }
 
+  // ─── General blood / cardiometabolic markers ─────────────────────────────────
+  const hemoglobin = get('hemoglobin');
+  const cholesterol = get('cholesterol_total');
+  const triglycerides = get('triglycerides');
+  const glucose = get('fasting_glucose');
+  const alt = get('alt');
+
+  if (hemoglobin && (hemoglobin.status === STATUS.CRITICAL || hemoglobin.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: hemoglobin.status === STATUS.CRITICAL ? 'high' : 'medium',
+      icon: '🩸',
+      title: `Hemoglobin is ${r(hemoglobin.value)} — Anemia Can Mimic and Worsen Thyroid Symptoms`,
+      detail: `Your hemoglobin of ${r(hemoglobin.value)} g/dL is below the ideal level. Anemia and low thyroid produce almost identical symptoms — fatigue, hair loss, brain fog, and feeling cold — which is why low hemoglobin often goes unnoticed in Hashimoto's patients. It also impairs the conversion of T4 to the active T3 hormone your body runs on. What to do: (1) Ask your doctor to check your ferritin (iron stores) and B12 — these are the two most common causes. (2) If iron-deficient: look for "iron bisglycinate" supplements, take with Vitamin C, and avoid taking within 4 hours of thyroid medication. (3) If B12-related: take methylcobalamin (not cyanocobalamin) dissolved under your tongue. (4) Retest in 2–3 months.`,
+    });
+  }
+
+  if (cholesterol && (cholesterol.status === STATUS.CRITICAL || cholesterol.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: 'medium',
+      icon: '💛',
+      title: `Total Cholesterol is ${r(cholesterol.value)} — Often a Sign of Undertreated Hypothyroidism`,
+      detail: `Your total cholesterol of ${r(cholesterol.value)} mg/dL is above the ideal range. This is one of the most common — and overlooked — signs that your thyroid isn't optimized. Thyroid hormone directly controls the liver receptors that clear LDL from your bloodstream. When thyroid levels drop, cholesterol rises. Many people are prescribed cholesterol medication without first optimizing their thyroid. What to do: (1) If your TSH is above 2.5 or your Free T4/T3 are low, talk to your doctor about optimizing your thyroid medication first. (2) Add omega-3 fish oil (2–3 grams/day) — well-studied for lowering cholesterol. (3) Reduce refined carbs and trans fats. (4) Recheck cholesterol 3 months after any thyroid medication adjustment.`,
+    });
+  }
+
+  if (triglycerides && (triglycerides.status === STATUS.CRITICAL || triglycerides.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: 'medium',
+      icon: '📈',
+      title: `Triglycerides Are ${r(triglycerides.value)} — Elevated by Both Hypothyroidism and Insulin Resistance`,
+      detail: `Your triglycerides of ${r(triglycerides.value)} mg/dL are above the ideal level of 100. Two of the most common causes are undertreated hypothyroidism (the thyroid regulates how your liver handles fat) and insulin resistance (excess sugar gets converted to triglycerides). In Hashimoto's, these often occur together. What to do: (1) Ask your doctor to check your thyroid levels and fasting insulin — both can drive this up. (2) Cut out refined carbs and added sugar — these are directly converted to triglycerides. (3) Add omega-3 fish oil (2–3 grams/day). (4) Even a 30-minute walk after your largest meal significantly reduces post-meal triglyceride spikes.${isPcos ? ' With PCOS, addressing insulin resistance with inositol supplementation can also help.' : ''}`,
+    });
+  }
+
+  if (glucose && (glucose.status === STATUS.CRITICAL || glucose.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: glucose.status === STATUS.CRITICAL ? 'high' : 'medium',
+      icon: '🍬',
+      title: `Fasting Glucose is ${r(glucose.value)} — Blood Sugar Is Running Higher Than Ideal`,
+      detail: `Your fasting glucose of ${r(glucose.value)} mg/dL is above the optimal range of 85. Even mild blood sugar elevation drives chronic inflammation that worsens Hashimoto's antibody levels and makes insulin resistance worse over time. What to do: (1) Never eat carbohydrates alone — always pair them with protein, fat, or fiber to blunt the blood sugar rise. (2) Cut out the biggest spikes: white bread, white rice, juice, sweetened drinks, and processed snacks. (3) Walk for 10 minutes after your biggest meal — even a short walk dramatically lowers blood sugar spikes. (4) Ask your doctor to also check your HbA1c (3-month blood sugar average) and fasting insulin for a more complete picture.${isPcos ? ' With PCOS, myo-inositol (2,000–4,000 mg/day) can significantly improve insulin sensitivity.' : ''}`,
+    });
+  }
+
+  if (alt && (alt.status === STATUS.CRITICAL || alt.status === STATUS.CONCERN)) {
+    takeaways.push({
+      priority: alt.status === STATUS.CRITICAL ? 'high' : 'medium',
+      icon: '🫀',
+      title: `Liver Enzyme (ALT) is ${r(alt.value)} — Thyroid Disease Affects Liver Function`,
+      detail: `Your ALT of ${r(alt.value)} IU/L is above the optimal level of 25. The liver and thyroid are closely linked — hypothyroidism slows the liver's ability to process fats and can lead to non-alcoholic fatty liver disease (NAFLD), while high antibody levels drive systemic inflammation that strains liver cells. What to do: (1) Ask your doctor to check whether your thyroid levels are optimal — improving thyroid function often brings liver enzymes down. (2) Avoid alcohol and unnecessary over-the-counter pain relievers (especially acetaminophen) while ALT is elevated. (3) If you haven't had an abdominal ultrasound to check for fatty liver, it's worth asking. (4) An anti-inflammatory diet (low refined carbs, high vegetables, omega-3s) directly supports liver health.`,
+    });
+  }
+
   // ─── "Consider testing" prompts for missing key markers ──────────────────────
   if (tsh && !ft3) {
     takeaways.push({

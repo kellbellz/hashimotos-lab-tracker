@@ -12,7 +12,7 @@ export function ManualEntry({ values, onChange, perspective }) {
     return acc;
   }, {});
 
-  const categoryOrder = ['thyroid', 'antibodies', 'nutrients', 'inflammation', 'hormones'];
+  const categoryOrder = ['thyroid', 'antibodies', 'nutrients', 'inflammation', 'hormones', 'cardiometabolic'];
 
   return (
     <div className="space-y-6">

@@ -1,12 +1,18 @@
 import { useState, useRef } from 'react';
 import { FileText, Image, Loader2, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import { extractTextFromPDF, extractTextFromImage, parseTextForMarkers } from '../lib/parseLabs.js';
+import { MARKERS } from '../data/markers.js';
 
-// Keywords that indicate the report is a non-thyroid panel — used to give
-// a more helpful "wrong report" message instead of a generic parse failure.
+// Marker IDs that belong to the thyroid/antibodies categories — used to detect
+// whether an upload contained any thyroid-specific results.
+const THYROID_IDS = new Set(
+  MARKERS.filter(m => m.category === 'thyroid' || m.category === 'antibodies').map(m => m.id)
+);
+
+// Keywords that signal a known non-thyroid report type.
 const REPORT_TYPE_HINTS = [
   { keywords: ['complete blood count', 'white blood cell', 'hemoglobin', 'hematocrit', 'platelet', 'neutrophil', 'lymphocyte'], label: 'Complete Blood Count (CBC)' },
-  { keywords: ['comprehensive metabolic', 'basic metabolic', 'creatinine', 'bun ', 'glucose', 'sodium', 'potassium', 'chloride', 'co2'], label: 'Metabolic Panel' },
+  { keywords: ['comprehensive metabolic', 'basic metabolic', 'creatinine', 'bun ', 'sodium', 'potassium', 'chloride'], label: 'Metabolic Panel' },
   { keywords: ['lipid panel', 'total cholesterol', 'ldl', 'hdl', 'triglyceride'], label: 'Lipid Panel' },
   { keywords: ['urinalysis', 'urine culture', 'specific gravity', 'leukocyte esterase'], label: 'Urinalysis' },
 ];
@@ -14,29 +20,37 @@ const REPORT_TYPE_HINTS = [
 function detectReportType(text) {
   const lower = text.toLowerCase();
   for (const hint of REPORT_TYPE_HINTS) {
-    const matches = hint.keywords.filter(k => lower.includes(k));
-    if (matches.length >= 2) return hint.label;
+    if (hint.keywords.filter(k => lower.includes(k)).length >= 2) return hint.label;
   }
   return null;
+}
+
+async function extractText(file) {
+  const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
+  if (isPDF) return extractTextFromPDF(file);
+  if (file.type.startsWith('image/')) return extractTextFromImage(file);
+  throw new Error(`Unsupported file type: ${file.name}`);
 }
 
 export function UploadZone({ onParsed }) {
   const [status, setStatus] = useState('idle');   // idle | processing | done | warning | error
   const [message, setMessage] = useState('');
   const [subMessage, setSubMessage] = useState('');
+  const [thyroidNudge, setThyroidNudge] = useState(false);
   const [rawText, setRawText] = useState('');
   const [showPreview, setShowPreview] = useState(false);
   const [copied, setCopied] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef(null);
 
-  async function processFile(file) {
-    const isPDF = file.type === 'application/pdf' || file.name.endsWith('.pdf');
-    const isImage = file.type.startsWith('image/');
+  async function processFiles(files) {
+    const validFiles = files.filter(f =>
+      f.type === 'application/pdf' || f.name.endsWith('.pdf') || f.type.startsWith('image/')
+    );
 
-    if (!isPDF && !isImage) {
+    if (validFiles.length === 0) {
       setStatus('error');
-      setMessage('Please upload a PDF or image file (JPG, PNG, HEIC).');
+      setMessage('Please upload PDF or image files (JPG, PNG, HEIC).');
       setSubMessage('');
       return;
     }
@@ -44,73 +58,74 @@ export function UploadZone({ onParsed }) {
     setStatus('processing');
     setRawText('');
     setSubMessage('');
+    setThyroidNudge(false);
     setShowPreview(false);
-    setMessage(
-      isPDF
-        ? 'Reading your PDF — this may take up to 30 seconds…'
-        : 'Running OCR on your image (this may take 15–30 seconds)…'
-    );
 
-    try {
-      let text;
-      if (isPDF) {
-        text = await extractTextFromPDF(file);
-      } else {
-        text = await extractTextFromImage(file);
-      }
+    const allParsed = {};
+    const skipped = files.length - validFiles.length;
+    let lastRawText = '';
+    let detectedTypes = [];
 
-      if (!text || text.trim().length < 20) {
-        setStatus('error');
-        setMessage(
-          isPDF
-            ? 'Could not read text from this PDF. Try taking a screenshot of your results and uploading that as a JPG or PNG instead.'
-            : 'Could not read text from this image. Try a clearer photo or enter values manually.'
-        );
-        setSubMessage('');
-        return;
-      }
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i];
+      setMessage(
+        validFiles.length === 1
+          ? `Reading ${file.name.length > 30 ? file.name.slice(0, 28) + '…' : file.name}…`
+          : `Reading file ${i + 1} of ${validFiles.length}…`
+      );
 
-      const parsed = parseTextForMarkers(text);
-      const count = Object.keys(parsed).length;
-
-      if (count === 0) {
-        const reportType = detectReportType(text);
-
-        if (reportType) {
-          // Accepted — just no thyroid markers in this particular report
-          setStatus('warning');
-          setMessage(`Got your ${reportType} — no thyroid markers in this one.`);
-          setSubMessage(
-            'Upload your thyroid panel too to see your full picture. Look for a report that includes TSH, Free T4, Free T3, or TPO antibodies.'
-          );
-        } else {
-          setRawText(text.trim().slice(0, 3000));
-          setStatus('warning');
-          setMessage("Text was extracted but no thyroid lab values were recognized.");
-          setSubMessage(
-            'Your report may use a format we haven\'t seen yet. Try uploading your thyroid panel, or enter values manually below.'
-          );
+      try {
+        const text = await extractText(file);
+        if (text && text.trim().length >= 20) {
+          const type = detectReportType(text);
+          if (type) detectedTypes.push(type);
+          const parsed = parseTextForMarkers(text);
+          Object.assign(allParsed, parsed);
+          lastRawText = text.trim().slice(0, 3000);
         }
-        return;
+      } catch (err) {
+        console.warn(`[LabParser] Error reading ${file.name}:`, err?.message);
+        // continue with other files
       }
-
-      setRawText('');
-      setSubMessage('');
-      setStatus('done');
-      setMessage(`Found ${count} lab value${count !== 1 ? 's' : ''}. Review and correct anything that looks off.`);
-      onParsed(parsed);
-    } catch (err) {
-      console.error('[LabParser] Error:', err);
-      setStatus('error');
-      setMessage(err?.message || 'Something went wrong reading this file. Try manual entry instead.');
-      setSubMessage('');
     }
+
+    const totalCount = Object.keys(allParsed).length;
+
+    if (totalCount === 0) {
+      const typeLabel = detectedTypes[0] || null;
+      if (typeLabel) {
+        setStatus('warning');
+        setMessage(`Got your ${typeLabel} — no values we track were found in this one.`);
+        setSubMessage(
+          'Upload your thyroid panel too to see your full picture. Look for a report that includes TSH, Free T4, Free T3, or TPO antibodies.'
+        );
+      } else {
+        setRawText(lastRawText);
+        setStatus('warning');
+        setMessage('Text was extracted but no lab values were recognized.');
+        setSubMessage(
+          'Your report may use a format we haven\'t seen yet. Try uploading your thyroid panel, or enter values manually below.'
+        );
+      }
+      return;
+    }
+
+    // Values found — call onParsed and check if any are thyroid markers
+    onParsed(allParsed);
+    const hasThyroid = Object.keys(allParsed).some(id => THYROID_IDS.has(id));
+    const fileWord = validFiles.length === 1 ? 'file' : `${validFiles.length} files`;
+    const skippedNote = skipped > 0 ? ` (${skipped} unsupported file${skipped > 1 ? 's' : ''} skipped)` : '';
+
+    setStatus('done');
+    setMessage(`Found ${totalCount} lab value${totalCount !== 1 ? 's' : ''} from ${fileWord}.${skippedNote} Review and correct anything that looks off.`);
+    setThyroidNudge(!hasThyroid);
+    setSubMessage('');
   }
 
   function handleFileInput(e) {
-    const file = e.target.files?.[0];
-    if (file) {
-      processFile(file);
+    const files = [...(e.target.files || [])];
+    if (files.length > 0) {
+      processFiles(files);
       e.target.value = '';
     }
   }
@@ -118,8 +133,8 @@ export function UploadZone({ onParsed }) {
   function handleDrop(e) {
     e.preventDefault();
     setDragOver(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file) processFile(file);
+    const files = [...(e.dataTransfer.files || [])];
+    if (files.length > 0) processFiles(files);
   }
 
   async function handleCopy() {
@@ -127,13 +142,12 @@ export function UploadZone({ onParsed }) {
       await navigator.clipboard.writeText(rawText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    } catch {
-      // ignore
-    }
+    } catch { /* ignore */ }
   }
 
   return (
     <div className="space-y-3">
+      {/* Drop zone — always visible so users can keep adding files */}
       <div
         className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer
           ${dragOver ? 'border-teal-300 bg-teal-50' : 'border-stone-200 hover:border-stone-300 bg-stone-50/50'}`}
@@ -142,7 +156,14 @@ export function UploadZone({ onParsed }) {
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
       >
-        <input ref={inputRef} type="file" accept=".pdf,image/*" className="hidden" onChange={handleFileInput} />
+        <input
+          ref={inputRef}
+          type="file"
+          accept=".pdf,image/*"
+          multiple
+          className="hidden"
+          onChange={handleFileInput}
+        />
 
         {status === 'processing' ? (
           <div className="flex flex-col items-center gap-3">
@@ -160,19 +181,36 @@ export function UploadZone({ onParsed }) {
               </div>
             </div>
             <div>
-              <p className="font-semibold text-stone-700">Drop your lab results here</p>
-              <p className="text-sm text-stone-400 mt-1">PDF or image (JPG, PNG, screenshot) &bull; <span className="text-teal-500">click to browse</span></p>
+              <p className="font-semibold text-stone-700">
+                {status === 'done' ? 'Drop more files to add results' : 'Drop your lab results here'}
+              </p>
+              <p className="text-sm text-stone-400 mt-1">
+                PDF or image &bull; multiple files OK &bull; <span className="text-teal-500">click to browse</span>
+              </p>
             </div>
           </div>
         )}
       </div>
 
+      {/* Success */}
       {status === 'done' && (
-        <div className="flex items-center gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2.5 border border-emerald-100">
-          <span>✓</span> {message}
+        <div className="space-y-2">
+          <div className="flex items-start gap-2 text-sm text-emerald-700 bg-emerald-50 rounded-xl px-3 py-2.5 border border-emerald-100">
+            <span className="mt-0.5">✓</span>
+            <span>{message}</span>
+          </div>
+          {thyroidNudge && (
+            <div className="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
+              <p className="text-sm text-amber-800 font-semibold">No thyroid markers found yet.</p>
+              <p className="text-sm text-amber-700 mt-0.5 leading-relaxed">
+                Upload your thyroid panel too — look for a report with TSH, Free T4, Free T3, or TPO antibodies.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
+      {/* Warning — text extracted but nothing (or no thyroid markers) found */}
       {status === 'warning' && (
         <div className="space-y-2">
           <div className="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
@@ -192,10 +230,7 @@ export function UploadZone({ onParsed }) {
               {showPreview && (
                 <div className="border-t border-stone-200">
                   <div className="flex justify-end px-3 py-1.5 border-b border-stone-100">
-                    <button
-                      onClick={handleCopy}
-                      className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-teal-600 transition-colors"
-                    >
+                    <button onClick={handleCopy} className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-teal-600 transition-colors">
                       {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                       {copied ? 'Copied!' : 'Copy all'}
                     </button>
@@ -210,6 +245,7 @@ export function UploadZone({ onParsed }) {
         </div>
       )}
 
+      {/* Hard error */}
       {status === 'error' && (
         <div className="bg-rose-50 rounded-xl px-3 py-2.5 border border-rose-100">
           <p className="text-sm text-rose-700 font-semibold">{message}</p>
