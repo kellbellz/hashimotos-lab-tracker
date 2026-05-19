@@ -9,7 +9,32 @@ export const MARKERS = [
     fullName: 'Thyroid Stimulating Hormone',
     unit: 'mIU/L',
     category: 'thyroid',
-    aliases: ['tsh', 'thyroid stimulating hormone', 'thyrotropin', 'tsh 3rd generation', 'tsh third generation', 'tsh reflex', 'thyroid stim hormone'],
+    aliases: [
+      // English
+      'tsh', 'thyroid stimulating hormone', 'thyrotropin', 'tsh 3rd generation', 'tsh third generation', 'tsh reflex', 'thyroid stim hormone',
+      // Spanish
+      'hormona estimulante de la tiroides', 'hormona estimulante del tiroides', 'tirotropina', 'hormona tireoestimulante',
+      // Portuguese
+      'hormônio estimulante da tireoide', 'hormônio tireotrófico', 'tireotropina',
+      // French
+      'thyréostimuline', 'hormone thyréostimulante', 'thyrotropine',
+      // German
+      'thyreotropin', 'thyrotropin',
+      // Russian
+      'тиреотропный гормон', 'ттг',
+      // Japanese
+      '甲状腺刺激ホルモン',
+      // Chinese
+      '促甲状腺激素', '促甲状腺素',
+      // Korean
+      '갑상선자극호르몬',
+      // Arabic
+      'الهرمون المنبه للغدة الدرقية', 'هرمون تحفيز الغدة الدرقية',
+      // Hindi
+      'थायरॉइड उत्तेजक हार्मोन', 'थायराइड स्टिम्युलेटिंग हार्मोन',
+      // Bengali
+      'থাইরয়েড-উত্তেজক হরমোন',
+    ],
     standard: { low: 0.4, high: 4.0 },
     optimal: { low: 1.0, high: 2.5 },
     priority: 1,
@@ -24,7 +49,29 @@ export const MARKERS = [
     fullName: 'Free Thyroxine',
     unit: 'ng/dL',
     category: 'thyroid',
-    aliases: ['free t4', 'ft4', 'free thyroxine', 't4 free', 't4 free direct', 't4,free', 'thyroxine t4 free', 't4 free thyroxine', 't4 thyroxine free'],
+    aliases: [
+      'free t4', 'ft4', 'free thyroxine', 't4 free', 't4 free direct', 't4,free', 'thyroxine t4 free', 't4 free thyroxine', 't4 thyroxine free',
+      // Spanish
+      't4 libre', 'tiroxina libre', 't4l',
+      // Portuguese
+      't4 livre', 'tiroxina livre',
+      // French
+      't4 libre', 'thyroxine libre', 't4l',
+      // German
+      'freies t4', 'freies thyroxin',
+      // Russian
+      'свободный т4', 'тироксин свободный', 'т4 свободный',
+      // Japanese
+      '遊離サイロキシン', '遊離t4', 'フリーt4',
+      // Chinese
+      '游离甲状腺素', '游离t4',
+      // Korean
+      '유리 티록신', '자유 t4',
+      // Arabic
+      'الثيروكسين الحر', 't4 الحر',
+      // Hindi
+      'मुक्त थायरोक्सिन',
+    ],
     standard: { low: 0.8, high: 1.8 },
     optimal: { low: 1.1, high: 1.7 },
     priority: 2,
@@ -39,7 +86,29 @@ export const MARKERS = [
     fullName: 'Free Triiodothyronine',
     unit: 'pg/mL',
     category: 'thyroid',
-    aliases: ['triiodothyronine t3 free', 'triiodothyronine free', 'free t3', 'ft3', 'free triiodothyronine', 't3 free', 't3, free', 't3 free serum', 'triiodothyronine serum free'],
+    aliases: [
+      'triiodothyronine t3 free', 'triiodothyronine free', 'free t3', 'ft3', 'free triiodothyronine', 't3 free', 't3, free', 't3 free serum', 'triiodothyronine serum free',
+      // Spanish
+      't3 libre', 'triyodotironina libre', 't3l',
+      // Portuguese
+      't3 livre', 'triiodotironina livre',
+      // French
+      't3 libre', 'triiodothyronine libre',
+      // German
+      'freies t3', 'freies triiodthyronin',
+      // Russian
+      'свободный т3', 'трийодтиронин свободный', 'т3 свободный',
+      // Japanese
+      '遊離トリヨードサイロニン', '遊離t3', 'フリーt3',
+      // Chinese
+      '游离三碘甲腺原氨酸', '游离t3',
+      // Korean
+      '유리 트리요오드티로닌',
+      // Arabic
+      'الثيرونين ثلاثي اليود الحر',
+      // Hindi
+      'मुक्त ट्राईआयोडोथायरोनिन',
+    ],
     standard: { low: 2.3, high: 4.2 },
     optimal: { low: 3.2, high: 4.2 },
     priority: 2,
@@ -54,7 +123,24 @@ export const MARKERS = [
     fullName: 'Reverse Triiodothyronine',
     unit: 'ng/dL',
     category: 'thyroid',
-    aliases: ['reverse t3 serum', 'reverse t3', 'rt3', 'reverse triiodothyronine'],
+    aliases: [
+      'reverse t3 serum', 'reverse t3', 'rt3', 'reverse triiodothyronine',
+      'rt3 serum', 'reverse triiodothyronine serum',
+      // Spanish
+      't3 reverso', 't3 inversa', 'triyodotironina inversa',
+      // Portuguese
+      't3 reverso', 'triiodotironina reversa',
+      // French
+      't3 inverse', 'triiodothyronine inverse',
+      // German
+      'reverses t3', 'reverses triiodthyronin',
+      // Russian
+      'реверсивный т3', 'обратный т3',
+      // Japanese
+      'リバースt3', '逆t3',
+      // Chinese
+      '反式三碘甲腺原氨酸', '逆t3',
+    ],
     standard: { low: 9.2, high: 24.1 },
     optimal: { low: 9.2, high: 15.0 },
     priority: 3,
@@ -69,7 +155,29 @@ export const MARKERS = [
     fullName: 'Anti-Thyroid Peroxidase Antibodies',
     unit: 'IU/mL',
     category: 'antibodies',
-    aliases: ['tpo', 'anti-tpo', 'thyroid peroxidase', 'tpo antibodies', 'antithyroid peroxidase', 'anti tpo ab', 'tpo ab', 'thyroid peroxidase ab', 'thyroid peroxidase antibody', 'thyroid peroxidase antibodies', 'peroxidase antithyroid'],
+    aliases: [
+      'tpo', 'anti-tpo', 'thyroid peroxidase', 'tpo antibodies', 'antithyroid peroxidase', 'anti tpo ab', 'tpo ab', 'thyroid peroxidase ab', 'thyroid peroxidase antibody', 'thyroid peroxidase antibodies', 'peroxidase antithyroid',
+      // Spanish
+      'anticuerpos antiperoxidasa tiroidea', 'anticuerpos tpo', 'anti tpo', 'peroxidasa tiroidea',
+      // Portuguese
+      'anticorpos antiperoxidase tireoidiana', 'anti-tpo',
+      // French
+      'anticorps anti-thyroperoxydase', 'anti-tpo', 'anticorps tpo',
+      // German
+      'schilddrüsenperoxidase antikörper', 'tpo antikörper',
+      // Russian
+      'антитела к тиреопероксидазе', 'ат-тпо', 'антитела тпо',
+      // Japanese
+      '抗甲状腺ペルオキシダーゼ抗体', '抗tpo抗体',
+      // Chinese
+      '抗甲状腺过氧化物酶抗体', '甲状腺过氧化物酶抗体',
+      // Korean
+      '갑상선 과산화효소 항체', '항tpo 항체',
+      // Arabic
+      'أجسام مضادة لبيروكسيداز الغدة الدرقية',
+      // Hindi
+      'थायरॉइड पेरोक्सीडेज एंटीबॉडी',
+    ],
     standard: { low: 0, high: 34 },
     optimal: { low: 0, high: 9 },
     priority: 1,
@@ -84,7 +192,29 @@ export const MARKERS = [
     fullName: 'Anti-Thyroglobulin Antibodies',
     unit: 'IU/mL',
     category: 'antibodies',
-    aliases: ['thyroglobulin antibody', 'tg ab', 'anti-tg', 'thyroglobulin antibodies', 'tgab', 'tg antibodies', 'antithyroglobulin', 'thyroglobulin ab', 'thyroglobulin autoantibody', 'thyroglobulin autoantibodies'],
+    aliases: [
+      'thyroglobulin antibody', 'tg ab', 'anti-tg', 'thyroglobulin antibodies', 'tgab', 'tg antibodies', 'antithyroglobulin', 'thyroglobulin ab', 'thyroglobulin autoantibody', 'thyroglobulin autoantibodies',
+      // Spanish
+      'anticuerpos antitiroglobulina', 'anti-tiroglobulina', 'anticuerpos tg',
+      // Portuguese
+      'anticorpos antitireoglobulina', 'anti-tireoglobulina',
+      // French
+      'anticorps anti-thyroglobuline', 'anti-thyroglobuline',
+      // German
+      'thyreoglobulin antikörper', 'anti-thyreoglobulin',
+      // Russian
+      'антитела к тиреоглобулину', 'ат-тг',
+      // Japanese
+      '抗サイログロブリン抗体', '抗tg抗体',
+      // Chinese
+      '抗甲状腺球蛋白抗体', '甲状腺球蛋白抗体',
+      // Korean
+      '갑상선글로불린 항체', '항tg 항체',
+      // Arabic
+      'أجسام مضادة للثيروغلوبولين',
+      // Hindi
+      'थायरोग्लोबुलिन एंटीबॉडी',
+    ],
     standard: { low: 0, high: 0.9 },
     optimal: { low: 0, high: 0.9 },
     priority: 1,
@@ -99,7 +229,31 @@ export const MARKERS = [
     fullName: '25-OH Vitamin D',
     unit: 'ng/mL',
     category: 'nutrients',
-    aliases: ['vitamin d 25 hydroxy', '25 hydroxy vitamin d', 'vitamin d 25-hydroxy', 'vitamin d', '25-oh vitamin d', 'vit d', 'vitamin d3', '25 oh vitamin d', '25(oh)d', '25-hydroxyvitamin d', '25 hydroxyvitamin d', 'vitamin d 25 hydroxyvitamin d', 'cholecalciferol', 'vitamin d total'],
+    aliases: [
+      'vitamin d 25 hydroxy', '25 hydroxy vitamin d', 'vitamin d 25-hydroxy', 'vitamin d', '25-oh vitamin d', 'vit d', 'vitamin d3', '25 oh vitamin d', '25(oh)d', '25-hydroxyvitamin d', '25 hydroxyvitamin d', 'vitamin d 25 hydroxyvitamin d', 'cholecalciferol', 'vitamin d total',
+      // Spanish
+      'vitamina d', '25-hidroxivitamina d', 'vitamina d3',
+      // Portuguese
+      'vitamina d', '25-hidroxivitamina d', 'vitamina d3',
+      // French
+      'vitamine d', '25-hydroxyvitamine d', 'vitamine d3',
+      // German
+      'vitamin d', '25-hydroxy-vitamin d', 'calcidiol',
+      // Russian
+      'витамин d', '25-гидроксивитамин d', 'кальцидиол',
+      // Japanese
+      'ビタミンd', '25-ヒドロキシビタミンd',
+      // Chinese
+      '维生素d', '25羟基维生素d',
+      // Korean
+      '비타민 d', '25-하이드록시비타민 d',
+      // Arabic
+      'فيتامين د', '25 هيدروكسي فيتامين د',
+      // Hindi
+      'विटामिन डी', '25-हाइड्रॉक्सीविटामिन डी',
+      // Bengali
+      'ভিটামিন ডি',
+    ],
     standard: { low: 30, high: 100 },
     optimal: { low: 50, high: 80 },
     priority: 2,
@@ -114,7 +268,27 @@ export const MARKERS = [
     fullName: 'Serum Ferritin',
     unit: 'ng/mL',
     category: 'nutrients',
-    aliases: ['ferritin', 'serum ferritin', 'ferritin serum', 'ferritin blood'],
+    aliases: [
+      'ferritin', 'serum ferritin', 'ferritin serum', 'ferritin blood',
+      // Spanish / Portuguese
+      'ferritina', 'ferritina sérica',
+      // French
+      'ferritine', 'ferritine sérique',
+      // German
+      'ferritin', 'serum ferritin',
+      // Russian
+      'ферритин', 'сывороточный ферритин',
+      // Japanese
+      'フェリチン',
+      // Chinese
+      '铁蛋白', '血清铁蛋白',
+      // Korean
+      '페리틴', '혈청 페리틴',
+      // Arabic
+      'فيريتين', 'الفيريتين',
+      // Hindi
+      'फेरिटिन',
+    ],
     standard: { low: 12, high: 150 },
     optimal: { low: 70, high: 150 },
     priority: 2,
@@ -129,7 +303,27 @@ export const MARKERS = [
     fullName: 'Vitamin B12',
     unit: 'pg/mL',
     category: 'nutrients',
-    aliases: ['b12', 'vitamin b12', 'cobalamin', 'vit b12', 'vitamin b 12', 'cyanocobalamin', 'b12 vitamin', 'cobalamin serum'],
+    aliases: [
+      'b12', 'vitamin b12', 'cobalamin', 'vit b12', 'vitamin b 12', 'cyanocobalamin', 'b12 vitamin', 'cobalamin serum',
+      // Spanish / Portuguese
+      'vitamina b12', 'cobalamina', 'vitamina b 12',
+      // French
+      'vitamine b12', 'cobalamine',
+      // German
+      'vitamin b12', 'cobalamin',
+      // Russian
+      'витамин b12', 'кобаламин', 'цианокобаламин',
+      // Japanese
+      'ビタミンb12', 'コバラミン',
+      // Chinese
+      '维生素b12', '钴胺素',
+      // Korean
+      '비타민 b12', '코발라민',
+      // Arabic
+      'فيتامين ب12', 'كوبالامين',
+      // Hindi
+      'विटामिन बी12', 'कोबालामिन',
+    ],
     standard: { low: 200, high: 900 },
     optimal: { low: 500, high: 900 },
     priority: 3,
@@ -144,7 +338,29 @@ export const MARKERS = [
     fullName: 'High-Sensitivity C-Reactive Protein',
     unit: 'mg/L',
     category: 'inflammation',
-    aliases: ['crp', 'c-reactive protein', 'hs-crp', 'hsCRP', 'high sensitivity crp', 'hs crp', 'c reactive protein cardiac', 'c reactive protein high sensitivity', 'crp cardiac', 'crp high sensitivity'],
+    aliases: [
+      'crp', 'c-reactive protein', 'hs-crp', 'hsCRP', 'high sensitivity crp', 'hs crp', 'c reactive protein cardiac', 'c reactive protein high sensitivity', 'crp cardiac', 'crp high sensitivity',
+      // Spanish
+      'proteína c reactiva', 'pcr', 'proteína c-reactiva de alta sensibilidad',
+      // Portuguese
+      'proteína c reativa', 'pcr', 'proteína c-reativa ultrassensível',
+      // French
+      'protéine c réactive', 'crp ultrasénsible',
+      // German
+      'c-reaktives protein', 'crp',
+      // Russian
+      'с-реактивный белок', 'срб', 'высокочувствительный срб',
+      // Japanese
+      'c反応性タンパク', 'crp',
+      // Chinese
+      'c反应蛋白', '超敏c反应蛋白',
+      // Korean
+      'c반응성 단백', '고감도 crp',
+      // Arabic
+      'بروتين سي التفاعلي', 'crp',
+      // Hindi
+      'सी-रिएक्टिव प्रोटीन',
+    ],
     standard: { low: 0, high: 3.0 },
     optimal: { low: 0, high: 1.0 },
     priority: 2,
@@ -206,7 +422,29 @@ export const MARKERS = [
     fullName: 'Hemoglobin',
     unit: 'g/dL',
     category: 'nutrients',
-    aliases: ['hemoglobin', 'haemoglobin', 'hgb', 'hb', 'hemoglobin labcorp', 'hemoglobin labcorp', 'hgb labcorp'],
+    aliases: [
+      'hemoglobin', 'haemoglobin', 'hgb', 'hb', 'hemoglobin labcorp', 'hgb labcorp',
+      // Spanish / Portuguese
+      'hemoglobina',
+      // French
+      'hémoglobine',
+      // German
+      'hämoglobin',
+      // Russian
+      'гемоглобин',
+      // Japanese
+      'ヘモグロビン',
+      // Chinese
+      '血红蛋白', '血色素',
+      // Korean
+      '혈색소', '헤모글로빈',
+      // Arabic
+      'الهيموغلوبين', 'خضاب الدم',
+      // Hindi
+      'हीमोग्लोबिन',
+      // Bengali
+      'হিমোগ্লোবিন',
+    ],
     standard: { low: 11.1, high: 16.0 },
     optimal: { low: 13.0, high: 16.0 },
     priority: 3,
@@ -223,7 +461,27 @@ export const MARKERS = [
     fullName: 'Total Cholesterol',
     unit: 'mg/dL',
     category: 'cardiometabolic',
-    aliases: ['cholesterol total', 'total cholesterol', 'cholesterol', 'cholesterol serum', 'cholesterol blood'],
+    aliases: [
+      'cholesterol total', 'total cholesterol', 'cholesterol', 'cholesterol serum', 'cholesterol blood',
+      // Spanish / Portuguese
+      'colesterol total', 'colesterol',
+      // French
+      'cholestérol total', 'cholestérol',
+      // German
+      'gesamtcholesterin', 'cholesterin',
+      // Russian
+      'общий холестерин', 'холестерин',
+      // Japanese
+      '総コレステロール', 'コレステロール',
+      // Chinese
+      '总胆固醇', '胆固醇',
+      // Korean
+      '총 콜레스테롤', '콜레스테롤',
+      // Arabic
+      'الكوليسترول الكلي', 'كوليسترول',
+      // Hindi
+      'कुल कोलेस्ट्रॉल', 'कोलेस्ट्रॉल',
+    ],
     standard: { low: 0, high: 200 },
     optimal: { low: 0, high: 180 },
     priority: 3,
@@ -238,7 +496,27 @@ export const MARKERS = [
     fullName: 'Triglycerides',
     unit: 'mg/dL',
     category: 'cardiometabolic',
-    aliases: ['triglycerides', 'triglyceride', 'trig', 'trigs'],
+    aliases: [
+      'triglycerides', 'triglyceride', 'trig', 'trigs',
+      // Spanish / Portuguese
+      'triglicéridos', 'triglicerídeos', 'triglicéridos',
+      // French
+      'triglycérides',
+      // German
+      'triglyzeride',
+      // Russian
+      'триглицериды',
+      // Japanese
+      '中性脂肪', 'トリグリセリド',
+      // Chinese
+      '甘油三酯', '三酸甘油脂',
+      // Korean
+      '중성지방', '트리글리세라이드',
+      // Arabic
+      'الدهون الثلاثية',
+      // Hindi
+      'ट्राइग्लिसराइड',
+    ],
     standard: { low: 0, high: 149 },
     optimal: { low: 0, high: 100 },
     priority: 3,
@@ -253,7 +531,29 @@ export const MARKERS = [
     fullName: 'Fasting Blood Glucose',
     unit: 'mg/dL',
     category: 'cardiometabolic',
-    aliases: ['glucose', 'glucose fasting', 'fasting glucose', 'blood glucose', 'glucose serum', 'glucose plasma', 'glucose blood'],
+    aliases: [
+      'glucose', 'glucose fasting', 'fasting glucose', 'blood glucose', 'glucose serum', 'glucose plasma', 'glucose blood',
+      // Spanish
+      'glucosa', 'glucosa en ayunas', 'glucemia',
+      // Portuguese
+      'glicose', 'glicose em jejum', 'glicemia',
+      // French
+      'glucose', 'glycémie', 'glucose à jeun',
+      // German
+      'glukose', 'blutzucker', 'nüchternglukose',
+      // Russian
+      'глюкоза', 'глюкоза крови', 'сахар крови',
+      // Japanese
+      '血糖', '空腹時血糖', 'グルコース',
+      // Chinese
+      '血糖', '空腹血糖', '葡萄糖',
+      // Korean
+      '혈당', '공복혈당', '포도당',
+      // Arabic
+      'الغلوكوز', 'سكر الدم', 'الجلوكوز الصيامي',
+      // Hindi
+      'ग्लूकोज', 'रक्त शर्करा', 'उपवास ग्लूकोज',
+    ],
     standard: { low: 70, high: 99 },
     optimal: { low: 70, high: 85 },
     priority: 3,
@@ -268,7 +568,27 @@ export const MARKERS = [
     fullName: 'Alanine Aminotransferase',
     unit: 'IU/L',
     category: 'inflammation',
-    aliases: ['alt', 'alanine aminotransferase', 'alanine transaminase', 'sgpt', 'alt serum', 'alt labcorp'],
+    aliases: [
+      'alt', 'alanine aminotransferase', 'alanine transaminase', 'sgpt', 'alt serum', 'alt labcorp',
+      // Spanish / Portuguese
+      'alanina aminotransferasa', 'alat', 'transaminasa glutámico-pirúvica', 'tgp',
+      // French
+      'alanine aminotransférase', 'alat',
+      // German
+      'alanin-aminotransferase', 'alat',
+      // Russian
+      'аланинаминотрансфераза', 'алт',
+      // Japanese
+      'アラニンアミノトランスフェラーゼ', 'alt', 'gpt',
+      // Chinese
+      '丙氨酸氨基转移酶', '谷丙转氨酶', 'alt',
+      // Korean
+      '알라닌 아미노전이효소', 'alt',
+      // Arabic
+      'ألانين أمينوترانسفيراز', 'alt',
+      // Hindi
+      'एलेनिन एमिनोट्रांसफेरेज',
+    ],
     standard: { low: 0, high: 40 },
     optimal: { low: 0, high: 25 },
     priority: 3,

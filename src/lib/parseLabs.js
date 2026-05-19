@@ -4,15 +4,40 @@ import { MARKERS } from '../data/markers.js';
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
+// Unicode-aware normalize: keeps letters from ALL scripts (Cyrillic, Arabic,
+// CJK, Devanagari, etc.) so non-Latin lab reports can match translated aliases.
 function normalize(str) {
-  return str.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  return str.toLowerCase()
+    .replace(/[^\p{L}\p{N}\s]/gu, ' ')   // keep Unicode letters & digits, drop punctuation
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Detect the dominant Unicode script in a block of text so we can load the
+// right Tesseract language pack for canvas OCR.
+function detectOcrLangs(text) {
+  if (!text || text.trim().length < 20) return 'eng+spa+fra+deu+por';
+  const langs = new Set(['eng']);
+  if (/[Ѐ-ӿ]/.test(text)) langs.add('rus');          // Cyrillic (Russian)
+  if (/[؀-ۿ]/.test(text)) langs.add('ara');          // Arabic
+  if (/[ऀ-ॿ]/.test(text)) langs.add('hin');          // Devanagari (Hindi)
+  if (/[぀-ヿ]/.test(text)) langs.add('jpn');          // Japanese kana
+  if (/[一-鿿㐀-䶿]/.test(text)) langs.add('chi_sim'); // CJK (Chinese/Japanese kanji)
+  if (/[가-힯]/.test(text)) langs.add('kor');          // Korean Hangul
+  if (/[ঀ-৿]/.test(text)) langs.add('ben');          // Bengali
+  // If only Latin characters detected, load the common Latin-script language packs
+  if (langs.size === 1) {
+    langs.add('spa'); langs.add('fra'); langs.add('deu'); langs.add('por');
+  }
+  return [...langs].join('+');
 }
 
 // Known unit strings — used to detect value lines and strip them during cleanup.
 const UNIT_PATTERN = /\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|g\/dL|ug\/dL|mcg\/dL|mcg\/L|nmol\/L|mL\/min|%|mlU\/L)\b/i;
 
 // Lines that should be skipped when looking for a value near a matched test name.
-const SKIP_LINE = /^(normal|abnormal|high|low|critical|final|preliminary|pending|in\s+range|out\s+of\s+range|reference\s+range|ref\s+range|units?|component|your\s+value|standard\s+range|flag|status|result\s+type)$/i;
+// Includes common status words in English + the 11 supported languages.
+const SKIP_LINE = /^(normal|abnormal|high|low|critical|final|preliminary|pending|in\s+range|out\s+of\s+range|reference\s+range|ref\s+range|units?|component|your\s+value|standard\s+range|flag|status|result\s+type|anormal|alto|baja|bajo|alta|cr[ii]tico|eleve|bas|critique|hoch|niedrig|kritisch|норма|нормально|высокий|низкий|正常|异常|高|低|정상|비정상|높음|낙음|طبيعي|مرتفع|منخفض|सामान्य|असामान्य)$/iu;
 
 // Remove a reference range like "0.40 - 4.50" or "0.40-4.50" from a string.
 function stripRanges(str) {
@@ -157,9 +182,13 @@ async function renderPageToDataUrl(page, scale = 2.0) {
 }
 
 // OCR fallback: render PDF pages to canvas, then run Tesseract on them.
-async function ocrPdfPages(pdf) {
+// Pass nativeText (if any) so we can detect the document's script and load
+// the right language pack — e.g. Russian, Arabic, CJK, etc.
+async function ocrPdfPages(pdf, nativeText = '') {
   const { createWorker } = await import('tesseract.js');
-  const worker = await createWorker('eng');
+  const langs = detectOcrLangs(nativeText);
+  console.log('[LabParser] OCR language packs:', langs);
+  const worker = await createWorker(langs);
   let fullText = '';
   const pageLimit = Math.min(pdf.numPages, 6);
   try {
@@ -241,8 +270,10 @@ export async function extractTextFromPDF(file) {
   }
 
   // ── Attempt 2: canvas OCR ──────────────────────────────────────────────────
+  // Pass whatever native text we scraped (even if empty) so detectOcrLangs
+  // can pick the right Tesseract language pack.
   try {
-    const text = await ocrPdfPages(pdf);
+    const text = await ocrPdfPages(pdf, '');
     console.log('[LabParser] Canvas OCR complete, length:', text.length);
     return text;
   } catch (ocrErr) {
@@ -254,15 +285,34 @@ export async function extractTextFromPDF(file) {
 }
 
 // Extract text from an image using Tesseract.js (client-side OCR).
+// Runs a quick English-only pass first to detect the script, then re-runs
+// with the appropriate language pack if non-Latin characters are found.
 export async function extractTextFromImage(file) {
   const { createWorker } = await import('tesseract.js');
-  const worker = await createWorker('eng');
   const url = URL.createObjectURL(file);
   try {
-    const { data: { text } } = await worker.recognize(url);
-    return text;
+    // First pass: English only (fast) — used purely for script detection
+    const probe = await createWorker('eng');
+    let probeText = '';
+    try {
+      const { data } = await probe.recognize(url);
+      probeText = data.text;
+    } finally {
+      await probe.terminate();
+    }
+
+    const langs = detectOcrLangs(probeText);
+    if (langs === 'eng') return probeText; // Latin only — reuse probe result
+
+    // Second pass: full multilingual OCR
+    const worker = await createWorker(langs);
+    try {
+      const { data: { text } } = await worker.recognize(url);
+      return text;
+    } finally {
+      await worker.terminate();
+    }
   } finally {
-    await worker.terminate();
     URL.revokeObjectURL(url);
   }
 }
