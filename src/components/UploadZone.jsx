@@ -1,5 +1,7 @@
 import { useState, useRef } from 'react';
-import { FileText, Image, Loader2, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
+import { FileText, Image, Loader2, ChevronDown, ChevronUp, Copy, Check, Mail } from 'lucide-react';
+
+const SUPPORT_EMAIL = 'labs@heal-hashimotos.com';
 import { extractTextFromPDF, extractTextFromImage, parseTextForMarkers } from '../lib/parseLabs.js';
 
 export function UploadZone({ onParsed }) {
@@ -101,6 +103,15 @@ export function UploadZone({ onParsed }) {
     }
   }
 
+  function handleEmailDebug() {
+    const subject = encodeURIComponent('Lab Parser — Format Not Recognized');
+    const snippet = rawText ? rawText.slice(0, 1500) : '(no text extracted)';
+    const body = encodeURIComponent(
+      `Hi,\n\nI uploaded a lab PDF and the parser couldn't recognize any values. Here's the extracted text:\n\n---\n${snippet}\n---\n\nPlease add support for this format!`
+    );
+    window.open(`mailto:${SUPPORT_EMAIL}?subject=${subject}&body=${body}`, '_blank');
+  }
+
   return (
     <div className="space-y-3">
       <div
@@ -149,31 +160,41 @@ export function UploadZone({ onParsed }) {
           </div>
 
           {rawText && (
-            <div className="rounded-xl border border-stone-200 bg-stone-50 overflow-hidden">
+            <div className="space-y-2">
               <button
-                className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-stone-600 hover:bg-stone-100 transition-colors"
-                onClick={() => setShowPreview(p => !p)}
+                onClick={handleEmailDebug}
+                className="w-full flex items-center justify-center gap-2 text-sm font-semibold text-teal-700 bg-teal-50 hover:bg-teal-100 border border-teal-200 rounded-xl px-3 py-2.5 transition-colors"
               >
-                <span>Show extracted text (for debugging)</span>
-                {showPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                <Mail className="w-4 h-4" />
+                Send extracted text to us for help
               </button>
 
-              {showPreview && (
-                <div className="border-t border-stone-200">
-                  <div className="flex justify-end px-3 py-1.5 border-b border-stone-100">
-                    <button
-                      onClick={handleCopy}
-                      className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-teal-600 transition-colors"
-                    >
-                      {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      {copied ? 'Copied!' : 'Copy all'}
-                    </button>
+              <div className="rounded-xl border border-stone-200 bg-stone-50 overflow-hidden">
+                <button
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-sm font-semibold text-stone-600 hover:bg-stone-100 transition-colors"
+                  onClick={() => setShowPreview(p => !p)}
+                >
+                  <span>View extracted text</span>
+                  {showPreview ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {showPreview && (
+                  <div className="border-t border-stone-200">
+                    <div className="flex justify-end px-3 py-1.5 border-b border-stone-100">
+                      <button
+                        onClick={handleCopy}
+                        className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-teal-600 transition-colors"
+                      >
+                        {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                        {copied ? 'Copied!' : 'Copy all'}
+                      </button>
+                    </div>
+                    <pre className="px-3 py-2.5 text-xs text-stone-500 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto font-mono">
+                      {rawText}
+                    </pre>
                   </div>
-                  <pre className="px-3 py-2.5 text-xs text-stone-500 whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto font-mono">
-                    {rawText}
-                  </pre>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </div>
