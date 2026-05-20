@@ -83,9 +83,12 @@ export function generateTakeaways(results, perspective) {
   const critical = results.filter(r => r.status === STATUS.CRITICAL);
   const concerns = results.filter(r => r.status === STATUS.CONCERN);
 
-  const isFertility   = perspective?.id === 'fertility';
-  const isPcos        = perspective?.id === 'pcos';
-  const isUndiagnosed = perspective?.id === 'undiagnosed';
+  const isFertility      = perspective?.id === 'fertility';
+  const isPcos           = perspective?.id === 'pcos';
+  const isUndiagnosed    = perspective?.id === 'undiagnosed';
+  const isMenopause      = perspective?.id === 'menopause';
+  const isPostmenopause  = perspective?.id === 'postmenopause';
+  const isAnyMenopause   = isMenopause || isPostmenopause;
 
   // ─── Undiagnosed perspective ─────────────────────────────────────────────────
   if (isUndiagnosed) {
@@ -466,6 +469,108 @@ export function generateTakeaways(results, perspective) {
     });
   }
 
+  // ─── Perimenopause / Postmenopause ────────────────────────────────────────────
+  if (isAnyMenopause) {
+    const estradiol   = get('estradiol');
+    const progesterone = get('progesterone');
+    const fsh         = get('fsh');
+    const cortisolAm  = get('cortisol_am');
+    const dheas       = get('dheas');
+
+    // Symptom overlap callout — always show when in a menopause perspective and
+    // any thyroid marker is out of range, so the user understands the picture.
+    const hasThyroidConcern = [tsh, ft3, ft4].some(
+      m => m && (m.status === STATUS.CRITICAL || m.status === STATUS.CONCERN)
+    );
+    if (hasThyroidConcern || results.length >= 2) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🔄',
+        title: 'Hashimoto\'s + Menopause: Separating Overlapping Symptoms',
+        detail: `Hashimoto's and ${isMenopause ? 'perimenopause' : 'postmenopause'} share nearly identical symptoms — fatigue, brain fog, weight gain, mood changes, poor sleep, and joint pain. The problem is that standard thyroid tests may look "normal" while both conditions are actively causing symptoms. The key is tracking both thyroid and hormone markers together, which is what this perspective helps you do. If you're still feeling bad despite managed thyroid labs, declining estrogen is often the missing piece. What to do: (1) Bring both your thyroid labs and hormone labs to your doctor at the same time. (2) Ask specifically: "Are my remaining symptoms more likely from my thyroid or from my hormone levels?" (3) A functional medicine doctor or a menopause-trained OB-GYN can often see the full picture more clearly than a standard endocrinologist.`,
+      });
+    }
+
+    // Rising / high FSH in perimenopause
+    if (isMenopause && fsh && (fsh.status === STATUS.CRITICAL || fsh.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'medium',
+        icon: '📈',
+        title: `FSH is ${r(fsh.value)} — Your Perimenopause Transition Is Underway`,
+        detail: `Follicle Stimulating Hormone (FSH) rises as your ovaries begin producing less estrogen. An FSH above 10 on day 2–3 of your cycle is an early sign of perimenopause. FSH above 30 on two tests taken 60+ days apart officially confirms menopause. This result is not a warning — it's information about where you are in the transition. What it means for your thyroid: estrogen changes affect how thyroid hormone is bound and used in your body. Some women find their thyroid symptoms shift during this time even without changes to their medication dose. What to do: (1) Ask your doctor to track FSH and estradiol at the same time as your next thyroid panel. (2) If you're still having periods, testing on day 2–3 of your cycle gives the most consistent FSH baseline. (3) Note whether your symptoms change at different points in your cycle — this pattern is clinically useful.`,
+      });
+    }
+
+    // Low estradiol (perimenopause) — missed estrogen contribution to symptoms
+    if (isMenopause && estradiol && (estradiol.status === STATUS.CRITICAL || estradiol.status === STATUS.CONCERN) && estradiol.direction === 'low') {
+      takeaways.push({
+        priority: 'medium',
+        icon: '📉',
+        title: `Estradiol is Low at ${r(estradiol.value)} pg/mL — Estrogen Depletion Is Affecting Your Symptoms`,
+        detail: `Your estradiol is below 50 pg/mL, which means you're spending significant time in an estrogen-deficient state. Low estrogen causes hot flashes, night sweats, poor sleep, brain fog, vaginal dryness, and joint pain — almost identical to hypothyroid symptoms. If your thyroid labs look managed but you still feel bad, low estrogen is often what's left. What to do: (1) Ask your doctor specifically about hormone therapy (HRT) — modern HRT is much safer than older formulations and is very effective for these symptoms. (2) There is growing evidence that bioidentical estradiol (the patch or gel form) may also help stabilize thyroid function during the transition. (3) Don't wait years to address this — early hormone support during perimenopause offers the most protective benefits for brain, bone, and heart health.`,
+      });
+    }
+
+    // Low progesterone (perimenopause)
+    if (isMenopause && progesterone && progesterone.direction === 'low' && (progesterone.status === STATUS.CRITICAL || progesterone.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'medium',
+        icon: '😴',
+        title: `Progesterone is Low at ${r(progesterone.value)} ng/mL — The Sleep & Calm Hormone Is Dropping`,
+        detail: `Progesterone is usually the first hormone to decline in perimenopause, often years before periods become irregular. It's the hormone that promotes sleep, reduces anxiety, and helps balance estrogen. When it drops, the result is insomnia, anxiety, irritability, and heavy periods — all of which can make thyroid symptoms significantly worse. Low progesterone also reduces cellular thyroid activity, meaning your thyroid medication may feel less effective. What to do: (1) Ask your doctor about bioidentical progesterone (not progestin — ask for "progesterone" by name, also called Prometrium). Taken at night, it has a natural sleep-promoting effect. (2) Testing progesterone on day 18–22 of your cycle (mid-luteal phase) gives the most meaningful result. (3) Improving progesterone often has a faster symptom impact than estrogen changes — many women notice better sleep within 2–3 weeks.`,
+      });
+    }
+
+    // High morning cortisol in menopause
+    if (isAnyMenopause && cortisolAm && cortisolAm.direction === 'high' && (cortisolAm.status === STATUS.CRITICAL || cortisolAm.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'medium',
+        icon: '⚡',
+        title: `Morning Cortisol is High at ${r(cortisolAm.value)} mcg/dL — Stress Hormones Are Amplified`,
+        detail: `Estrogen normally helps buffer the cortisol stress response. As estrogen declines, cortisol spikes become more intense and last longer. High cortisol directly suppresses thyroid function — it raises Reverse T3, lowers Free T3, and makes your cells less responsive to thyroid hormone. In other words, high cortisol can make your thyroid medication feel like it stopped working. What to do: (1) Prioritize sleep as a non-negotiable — cortisol spikes worsen dramatically with sleep deprivation, and poor sleep is often caused by dropping progesterone. (2) Avoid high-intensity exercise after 3 PM — this can spike cortisol at the wrong time. Morning strength training is better. (3) Ask your doctor about a 4-point saliva cortisol test to see your full daily cortisol rhythm. (4) Adaptogens like ashwagandha (check with your doctor first) can help blunt cortisol spikes.`,
+      });
+    }
+
+    // Postmenopause bone health: low Vitamin D is more urgent
+    if (isPostmenopause && vitd && (vitd.status === STATUS.CRITICAL || vitd.status === STATUS.CONCERN)) {
+      takeaways.push({
+        priority: 'high',
+        icon: '🦴',
+        title: `Vitamin D is ${r(vitd.value)} — Bone Loss Risk Is High Without Estrogen`,
+        detail: `After menopause, estrogen no longer helps protect your bones — now Vitamin D becomes your most important bone-protecting tool. With Vitamin D at ${r(vitd.value)} ng/mL and no estrogen support, your bones are losing density faster than they're building it. This increases your fracture risk significantly. What to do: (1) Start a Vitamin D3 + K2 supplement — at your level, aim for 4,000–5,000 IU of D3 per day paired with 200 mcg of K2 MK-7. K2 is critical because it directs calcium to your bones instead of your arteries. (2) Ask your doctor about a bone density scan (DEXA scan) if you haven't had one — it's recommended for all women within 2 years of menopause. (3) Get your Vitamin D retested in 8–12 weeks. The target in postmenopause is 60–80 ng/mL. (4) Weight-bearing exercise (walking, strength training) is the other essential piece — even 20–30 minutes daily makes a measurable difference to bone density.`,
+      });
+    }
+
+    // Postmenopause cardiovascular: cholesterol or glucose elevated
+    const cholesterol = get('cholesterol_total');
+    const glucose     = get('fasting_glucose');
+    const hba1c       = get('hba1c');
+    const hasCardioRisk = isPostmenopause && (
+      (cholesterol && cholesterol.status !== STATUS.OPTIMAL) ||
+      (glucose && glucose.status !== STATUS.OPTIMAL) ||
+      (hba1c && hba1c.status !== STATUS.OPTIMAL)
+    );
+    if (hasCardioRisk) {
+      const flagged = [cholesterol, glucose, hba1c].filter(m => m && m.status !== STATUS.OPTIMAL).map(m => m.marker.name);
+      takeaways.push({
+        priority: 'high',
+        icon: '❤️',
+        title: `Cardiovascular Risk Is Elevated: ${flagged.join(', ')} Need Attention`,
+        detail: `Estrogen was protective for your heart — it kept cholesterol in a healthy ratio, reduced inflammation, and helped keep blood vessels flexible. After menopause, that protection is gone, and cardiovascular disease becomes the #1 health risk for women. Your ${flagged.join(' and ')} ${flagged.length > 1 ? 'are' : 'is'} outside the ideal range. Combined with Hashimoto's-related inflammation, this needs attention. What to do: (1) Ask your doctor for a full cardiovascular risk assessment — this includes LDL, HDL, triglycerides, blood pressure, and ideally a high-sensitivity CRP (hs-CRP). (2) A Mediterranean-style diet has the strongest evidence for cardiovascular protection after menopause — whole foods, olive oil, fish, vegetables, and minimal processed sugar. (3) If you haven't discussed hormone therapy, ask your doctor — starting HRT within 10 years of menopause (the "window of opportunity") has cardiovascular protective effects. (4) Exercise is as powerful as medication for cardiovascular risk — 150 minutes of moderate activity per week is the target.`,
+      });
+    }
+
+    // Low DHEA-S in menopause/postmenopause
+    if (isAnyMenopause && dheas && dheas.direction === 'low' && dheas.status !== STATUS.OPTIMAL) {
+      takeaways.push({
+        priority: 'medium',
+        icon: '⚙️',
+        title: `DHEA-S is Low at ${r(dheas.value)} — Adrenal Support May Help`,
+        detail: `DHEA-S is a hormone made by your adrenal glands that declines naturally with age and accelerates around menopause. Low DHEA-S contributes to fatigue, poor immune function, low libido, and reduced muscle mass. In the context of Hashimoto's, low DHEA-S can worsen the immune imbalance that drives thyroid antibody attacks. What to do: (1) Ask your doctor about low-dose DHEA supplementation — this is one of the few hormones that can be safely supplemented based on lab results. (2) Do not self-supplement without testing, as too much DHEA can convert to testosterone and cause acne or hair changes. (3) Prioritize sleep and reduce high-intensity chronic stress — these are the biggest lifestyle drivers of DHEA decline. (4) Retest in 3–6 months after any intervention.`,
+      });
+    }
+  }
+
   // ─── All optimal ──────────────────────────────────────────────────────────────
   if (critical.length === 0 && concerns.length === 0 && results.length > 0) {
     takeaways.push({
@@ -495,9 +600,12 @@ export function generateTopActions(results, perspective) {
   const b12      = get('b12');
   const crp      = get('crp');
 
-  const isFertility   = perspective?.id === 'fertility';
-  const isPcos        = perspective?.id === 'pcos';
-  const isUndiagnosed = perspective?.id === 'undiagnosed';
+  const isFertility     = perspective?.id === 'fertility';
+  const isPcos          = perspective?.id === 'pcos';
+  const isUndiagnosed   = perspective?.id === 'undiagnosed';
+  const isMenopause     = perspective?.id === 'menopause';
+  const isPostmenopause = perspective?.id === 'postmenopause';
+  const isAnyMenopause  = isMenopause || isPostmenopause;
 
   // ── Doctor / medication actions ─────────────────────────────────────────────
   if (tsh && tsh.status === STATUS.CRITICAL && tsh.direction === 'high') {
@@ -805,6 +913,58 @@ export function generateTopActions(results, perspective) {
       title: "Ask your doctor to check for a stomach bacteria called H. pylori",
       detail: `Your inflammation marker (CRP ${r(crp.value)}) is high — H. pylori is a very common stomach infection that silently drives inflammation in Hashimoto's patients and is completely treatable once found.`,
     });
+  }
+
+  // ── Menopause / Postmenopause actions ────────────────────────────────────────
+  if (isAnyMenopause) {
+    const estradiol  = get('estradiol');
+    const fsh        = get('fsh');
+    const cortisolAm = get('cortisol_am');
+
+    // Request a combined thyroid + hormone panel
+    const missingHormones = !estradiol && !fsh;
+    if (missingHormones) {
+      candidates.push({
+        weight: 88,
+        label: 'Ask Your Doctor',
+        title: 'Ask for a combined thyroid + hormone panel at your next blood draw',
+        detail: `You've uploaded thyroid results but no hormone markers. Ask your doctor to add FSH, estradiol${isMenopause ? ', and progesterone (tested on day 18–22 of your cycle)' : ''} alongside your next thyroid panel — having both together is what shows the full picture of why you still feel symptoms even with managed thyroid labs.`,
+      });
+    }
+
+    // Low estradiol action
+    if (estradiol && estradiol.direction === 'low' && estradiol.status !== STATUS.OPTIMAL) {
+      candidates.push({
+        weight: 85,
+        label: 'Ask Your Doctor',
+        title: 'Have a focused conversation about hormone therapy (HRT)',
+        detail: `Your estradiol of ${r(estradiol.value)} pg/mL is low${isMenopause ? ' for perimenopause' : ' for postmenopause'}. Ask your doctor: "Is hormone therapy appropriate for me?" Modern transdermal estradiol (patch or gel) combined with bioidentical progesterone is very different from older pill-form HRT — it's safer and highly effective for the overlapping symptoms of menopause and Hashimoto's.`,
+      });
+    }
+
+    // High cortisol action
+    if (cortisolAm && cortisolAm.direction === 'high' && cortisolAm.status !== STATUS.OPTIMAL) {
+      candidates.push({
+        weight: 72,
+        label: 'Get Tested',
+        title: 'Do a 4-point saliva cortisol test to see your full daily stress pattern',
+        detail: `Your morning cortisol of ${r(cortisolAm.value)} mcg/dL is elevated. A single AM blood cortisol only shows one snapshot — a 4-point saliva test (morning, noon, afternoon, bedtime) reveals how your cortisol rises and falls throughout the day. This pattern tells your doctor far more about adrenal function than a single value. Ask for this, or order a home saliva kit your doctor can review.`,
+      });
+    }
+
+    // Postmenopause DEXA scan
+    if (isPostmenopause) {
+      const vitd = get('vitd');
+      const needsBoneScan = !vitd || vitd.status !== STATUS.OPTIMAL;
+      if (needsBoneScan) {
+        candidates.push({
+          weight: 80,
+          label: 'Ask Your Doctor',
+          title: "Ask about a DEXA bone density scan if you haven't had one",
+          detail: "A DEXA scan is recommended for all women within 2 years of menopause. It takes about 10 minutes and tells you exactly where your bone density stands so you can address any loss early — before it becomes a fracture risk.",
+        });
+      }
+    }
   }
 
   candidates.sort((a, b) => b.weight - a.weight);

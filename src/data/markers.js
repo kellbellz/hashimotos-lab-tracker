@@ -637,7 +637,7 @@ export const MARKERS = [
     fullName: 'Dehydroepiandrosterone Sulfate',
     unit: 'ug/dL',
     category: 'hormones',
-    perspectiveOnly: ['pcos'],
+    perspectiveOnly: ['pcos', 'menopause', 'postmenopause'],
     aliases: ['dhea-s', 'dheas', 'dhea sulfate', 'dehydroepiandrosterone sulfate', 'dhea s', 'dhea-sulfate'],
     standard: { low: 35, high: 430 },
     optimal: { low: 65, high: 275 },
@@ -653,7 +653,7 @@ export const MARKERS = [
     fullName: 'Sex Hormone Binding Globulin',
     unit: 'nmol/L',
     category: 'hormones',
-    perspectiveOnly: ['pcos'],
+    perspectiveOnly: ['pcos', 'menopause', 'postmenopause'],
     aliases: ['shbg', 'sex hormone binding globulin', 'sex hormone-binding globulin', 'sex horm binding glob'],
     standard: { low: 18, high: 114 },
     optimal: { low: 60, high: 114 },
@@ -679,6 +679,116 @@ export const MARKERS = [
     lowConcern: null,
     optimalNote: 'For PCOS, aim for HbA1c below 5.2% to minimize the androgen-driving insulin spikes. Cutting refined carbs and adding myo-inositol can make a significant difference.',
   },
+  // ── Perimenopause / Postmenopause markers ────────────────────────────────────
+  {
+    id: 'fsh',
+    name: 'FSH',
+    fullName: 'Follicle Stimulating Hormone',
+    unit: 'mIU/mL',
+    category: 'hormones',
+    perspectiveOnly: ['menopause', 'postmenopause'],
+    aliases: [
+      'fsh', 'follicle stimulating hormone', 'follicle-stimulating hormone', 'fsh serum',
+      'fsh level', 'follitropin',
+      // Spanish
+      'hormona foliculoestimulante', 'hormona estimulante del foliculo', 'fsh foliculoestimulante',
+      // French
+      'hormone folliculo-stimulante', 'follitropine',
+      // German
+      'follikelstimulierendes hormon', 'follikel stimulierendes hormon',
+      // Portuguese
+      'hormônio folículo estimulante',
+    ],
+    standard: { low: 0, high: 30 },
+    optimal: { low: 3, high: 10 },
+    priority: 3,
+    description: 'The hormone that triggers egg follicle development. Rising FSH is one of the earliest signs of perimenopause. Persistently high FSH (>30) confirms full menopause.',
+    highConcern: 'Rising FSH signals your ovaries are working harder to respond — a sign that the perimenopause transition is underway. FSH above 30 on two tests taken 60+ days apart confirms you have reached menopause. This is expected and normal, but it helps explain why you may be experiencing symptoms.',
+    lowConcern: null,
+    optimalNote: 'FSH fluctuates day-to-day in perimenopause, so a single reading is just a snapshot. Testing on day 2–3 of your cycle gives the most useful baseline. In postmenopause, FSH is naturally high (often 40–150) — that is expected and healthy.',
+  },
+  {
+    id: 'estradiol',
+    name: 'Estradiol (E2)',
+    fullName: 'Estradiol',
+    unit: 'pg/mL',
+    category: 'hormones',
+    perspectiveOnly: ['menopause', 'postmenopause'],
+    aliases: [
+      'estradiol', 'estradiol e2', 'e2', 'estradiol serum', 'estradiol, serum',
+      'oestradiol', 'estradiol level',
+      // Spanish
+      'estradiol', 'estrogeno', 'estrógeno', 'estradiol e2',
+      // French
+      'oestradiol', 'estradiol',
+      // German
+      'östradiol', 'estradiol',
+      // Portuguese
+      'estradiol',
+    ],
+    standard: { low: 5, high: 400 },
+    optimal: { low: 50, high: 200 },
+    priority: 2,
+    description: 'The main estrogen your ovaries produce. In perimenopause, estradiol fluctuates unpredictably. In postmenopause, it drops to a consistently low level. Low estrogen overlaps heavily with hypothyroid symptoms — distinguishing the two is key.',
+    highConcern: 'Estradiol above 400 without explanation may warrant a check with your doctor, especially if you are on estrogen therapy.',
+    lowConcern: 'Low estradiol causes hot flashes, night sweats, poor sleep, vaginal dryness, brain fog, and joint pain — symptoms that overlap heavily with hypothyroidism. If your thyroid labs look managed but you still feel off, low estrogen may be the missing piece.',
+    optimalNote: 'Estradiol varies a lot across the menstrual cycle and day-to-day — a single result is context-dependent. In postmenopause, levels of 10–30 pg/mL are expected without hormone therapy.',
+  },
+  {
+    id: 'progesterone',
+    name: 'Progesterone',
+    fullName: 'Serum Progesterone',
+    unit: 'ng/mL',
+    category: 'hormones',
+    perspectiveOnly: ['menopause'],
+    aliases: [
+      'progesterone', 'progesterone serum', 'progesterone, serum', 'serum progesterone',
+      'progesterone level',
+      // Spanish
+      'progesterona',
+      // French
+      'progestérone',
+      // German
+      'progesteron',
+      // Portuguese
+      'progesterona',
+    ],
+    standard: { low: 0.1, high: 25 },
+    optimal: { low: 5, high: 25 },
+    priority: 3,
+    description: 'The calming hormone of the second half of your cycle. In perimenopause, progesterone often drops before estrogen does — low progesterone causes anxiety, poor sleep, heavy periods, and mood swings.',
+    highConcern: null,
+    lowConcern: 'Low progesterone is one of the first hormonal shifts in perimenopause. It causes anxiety, insomnia, night sweats, irritability, and heavy periods — all symptoms that are often misattributed to thyroid issues. Low progesterone also reduces thyroid hormone activity at the cellular level.',
+    optimalNote: 'Progesterone is only meaningful when tested in the second half of your cycle (day 18–22). A result below 5 ng/mL mid-luteal phase suggests you did not ovulate that month — very common in perimenopause.',
+  },
+  {
+    id: 'cortisol_am',
+    name: 'Cortisol (AM)',
+    fullName: 'Morning Serum Cortisol',
+    unit: 'mcg/dL',
+    category: 'hormones',
+    perspectiveOnly: ['menopause', 'postmenopause'],
+    aliases: [
+      'cortisol', 'cortisol am', 'morning cortisol', 'cortisol serum', 'cortisol, serum',
+      'cortisol total', 'cortisol blood',
+      // Spanish
+      'cortisol', 'cortisol matutino', 'cortisol en suero',
+      // French
+      'cortisol', 'cortisol du matin',
+      // German
+      'kortisol', 'cortisol morgens',
+      // Portuguese
+      'cortisol', 'cortisol matinal',
+    ],
+    standard: { low: 6, high: 23 },
+    optimal: { low: 10, high: 18 },
+    priority: 3,
+    description: 'Your morning cortisol reflects how well your adrenal glands are managing daily stress. In perimenopause and postmenopause, estrogen loss makes the stress response more reactive — high cortisol worsens thyroid symptoms and raises Reverse T3.',
+    highConcern: 'High morning cortisol means your body is in a chronic stress state. This directly suppresses thyroid function, raises Reverse T3, disrupts sleep, breaks down muscle, and stores fat around the abdomen. In perimenopause, cortisol spikes are more pronounced because estrogen normally buffers the stress response.',
+    lowConcern: 'Low morning cortisol can cause fatigue, dizziness, and poor stress tolerance. If consistently low, your doctor may want to rule out adrenal insufficiency.',
+    optimalNote: 'This test must be done before 9 AM for the result to be meaningful. A 4-point saliva cortisol test (morning, noon, evening, bedtime) gives a fuller picture of how your cortisol pattern shifts throughout the day.',
+  },
+
   // ── Fertility-specific markers ───────────────────────────────────────────────
   {
     id: 'folate',

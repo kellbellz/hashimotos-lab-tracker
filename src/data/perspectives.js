@@ -18,6 +18,31 @@ export const PERSPECTIVES = [
     },
   },
   {
+    id: 'menopause',
+    name: "Hashimoto's + Perimenopause",
+    emoji: '🌊',
+    description: 'Thyroid + hormone transition support',
+    additionalMarkerIds: ['fsh', 'estradiol', 'progesterone', 'cortisol_am', 'dheas', 'shbg'],
+    optimalOverrides: {
+      tsh:     { low: 1.0, high: 2.0 },
+      vitd:    { low: 60, high: 80 },
+      ferritin: { low: 70, high: 150 },
+    },
+  },
+  {
+    id: 'postmenopause',
+    name: "Hashimoto's + Postmenopause",
+    emoji: '🌸',
+    description: 'Thyroid + bone, heart & vitality support',
+    additionalMarkerIds: ['fsh', 'estradiol', 'cortisol_am', 'dheas', 'shbg', 'hba1c'],
+    optimalOverrides: {
+      tsh:      { low: 1.0, high: 2.0 },
+      vitd:     { low: 60, high: 80 },
+      fsh:      { low: 25, high: 150 },   // expected high in postmenopause = normal
+      estradiol: { low: 5, high: 30 },    // expected low range = normal
+    },
+  },
+  {
     id: 'undiagnosed',
     name: "Could I Have Hashimoto's?",
     emoji: '🔍',
