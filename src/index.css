@@ -8,6 +8,8 @@
 body {
   margin: 0;
   font-family: 'Nunito', system-ui, -apple-system, sans-serif;
-  background: #faf8f5;
+  background: linear-gradient(145deg, #f0fdfb 0%, #faf8f5 45%, #fdf4ff 100%);
+  background-attachment: fixed;
+  min-height: 100vh;
   color: #292524;
 }

@@ -77,16 +77,18 @@ export default function App() {
   const visibleResults = showAllResults ? sorted : sorted.filter(r => r.status !== STATUS.OPTIMAL);
 
   return (
-    <div className="min-h-screen bg-stone-50">
+    <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-white/90 backdrop-blur-sm border-b border-stone-100 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between gap-3">
+      <header className="bg-white/80 backdrop-blur-md border-b border-teal-100/60 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-3xl mx-auto px-4 py-3.5 flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-teal-500 flex items-center justify-center shadow-sm shrink-0">
-              <Activity className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 rounded-2xl bg-gradient-to-br from-teal-400 to-cyan-500 flex items-center justify-center shadow-md shrink-0">
+              <Activity className="w-4.5 h-4.5 text-white" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-bold text-stone-800 leading-tight text-sm truncate">Hashimoto's Lab Tracker</h1>
+              <h1 className="font-extrabold text-stone-800 leading-tight text-sm truncate tracking-tight">
+                Hashimoto's Lab Tracker
+              </h1>
               <p className="text-xs text-stone-400">All data stays on your device</p>
             </div>
           </div>
@@ -105,19 +107,28 @@ export default function App() {
       <main className="max-w-3xl mx-auto px-4 py-8 space-y-5">
         {/* Hero */}
         {!hasAnyValues && (
-          <div className="text-center py-6">
-            <h2 className="text-2xl font-bold text-stone-800">Understand your Hashimoto's labs</h2>
-            <p className="text-stone-500 mt-2 max-w-lg mx-auto text-sm leading-relaxed">
-              Upload or enter your lab results to see which values are most concerning,
-              what they mean for Hashimoto's, and what to discuss with your doctor.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 mt-4 text-xs text-stone-400">
-              <span className="flex items-center gap-1.5">
-                <Shield className="w-3.5 h-3.5 text-teal-400" />
-                100% private — no data leaves your device
-              </span>
-              <span className="hidden sm:block">&bull;</span>
-              <span>For educational purposes — not medical advice</span>
+          <div className="rounded-3xl bg-gradient-to-br from-teal-500 via-cyan-500 to-violet-500 p-px shadow-lg">
+            <div className="rounded-3xl bg-white/95 px-6 py-8 text-center">
+              <div className="text-4xl mb-3">🦋</div>
+              <h2 className="text-2xl font-extrabold text-stone-800 tracking-tight">
+                Understand your Hashimoto's labs
+              </h2>
+              <p className="text-stone-500 mt-2 max-w-md mx-auto text-sm leading-relaxed">
+                Upload or enter your lab results to see which values need attention,
+                what they mean for Hashimoto's, and what to ask your doctor.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
+                <span className="flex items-center gap-1.5 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-100 rounded-full px-3 py-1">
+                  <Shield className="w-3.5 h-3.5" />
+                  100% private
+                </span>
+                <span className="text-xs font-semibold text-violet-700 bg-violet-50 border border-violet-100 rounded-full px-3 py-1">
+                  Not medical advice
+                </span>
+                <span className="text-xs font-semibold text-cyan-700 bg-cyan-50 border border-cyan-100 rounded-full px-3 py-1">
+                  Free forever
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -127,18 +138,18 @@ export default function App() {
 
         {/* Summary bar */}
         {hasAnyValues && (
-          <div className="bg-white rounded-2xl border border-stone-100 p-4 flex flex-wrap items-center gap-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <StatusDot status={STATUS.CRITICAL} />
-              <span className="text-sm font-semibold text-stone-700">{criticalCount} out of range</span>
+          <div className="grid grid-cols-3 gap-2.5">
+            <div className="bg-rose-50 border border-rose-200 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-extrabold text-rose-600">{criticalCount}</div>
+              <div className="text-xs font-semibold text-rose-500 mt-0.5">Out of Range</div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusDot status={STATUS.CONCERN} />
-              <span className="text-sm font-semibold text-stone-700">{concernCount} below optimal</span>
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-extrabold text-amber-600">{concernCount}</div>
+              <div className="text-xs font-semibold text-amber-500 mt-0.5">Below Optimal</div>
             </div>
-            <div className="flex items-center gap-2">
-              <StatusDot status={STATUS.OPTIMAL} />
-              <span className="text-sm font-semibold text-stone-700">{optimalCount} optimal</span>
+            <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3 text-center">
+              <div className="text-2xl font-extrabold text-emerald-600">{optimalCount}</div>
+              <div className="text-xs font-semibold text-emerald-500 mt-0.5">Optimal</div>
             </div>
           </div>
         )}
@@ -149,7 +160,13 @@ export default function App() {
         {/* Key Takeaways */}
         {takeaways.length > 0 && (
           <section>
-            <h2 className="text-base font-bold text-stone-700 mb-3">Key Takeaways</h2>
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-base font-extrabold text-stone-800">Key Takeaways</h2>
+              <span className="text-xs font-bold bg-gradient-to-r from-amber-400 to-orange-400 text-white px-2 py-0.5 rounded-full">
+                {takeaways.length}
+              </span>
+              <span className="text-xs text-stone-400 ml-1">Tap each to expand</span>
+            </div>
             <Takeaways takeaways={takeaways} />
           </section>
         )}
@@ -157,7 +174,7 @@ export default function App() {
         {/* Results */}
         {hasAnyValues && (
           <section>
-            <h2 className="text-base font-bold text-stone-700 mb-3">Your Lab Results</h2>
+            <h2 className="text-base font-extrabold text-stone-800 mb-3">Your Lab Results</h2>
             {visibleResults.length > 0 ? (
               <div className="space-y-3">
                 {visibleResults.map(result => (
