@@ -9,10 +9,12 @@ import { UploadZone } from './components/UploadZone.jsx';
 import { ManualEntry } from './components/ManualEntry.jsx';
 import { PerspectiveSelector } from './components/PerspectiveSelector.jsx';
 import { TrendsView } from './components/TrendsView.jsx';
+import { ExportPanel } from './components/ExportPanel.jsx';
 import { PERSPECTIVES, DEFAULT_PERSPECTIVE } from './data/perspectives.js';
 
-const STORAGE_KEY = 'hashimotos_labs_v1';
+const STORAGE_KEY    = 'hashimotos_labs_v1';
 const PERSPECTIVE_KEY = 'hashimotos_perspective_v1';
+const PATIENT_KEY    = 'hashimotos_patient_v1';
 
 function todayISO() {
   return new Date().toISOString().slice(0, 10);
@@ -20,6 +22,11 @@ function todayISO() {
 
 function loadSaved() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
+  catch { return {}; }
+}
+
+function loadPatient() {
+  try { return JSON.parse(localStorage.getItem(PATIENT_KEY) || '{}'); }
   catch { return {}; }
 }
 
@@ -35,6 +42,7 @@ function loadPerspective() {
 export default function App() {
   const [values, setValues]             = useState(loadSaved);
   const [perspective, setPerspective]   = useState(loadPerspective);
+  const [patientContext, setPatientContext] = useState(loadPatient);
   const [inputMode, setInputMode]       = useState('upload');
   const [showManual, setShowManual]     = useState(false);
   const [showAllResults, setShowAllResults] = useState(false);
@@ -47,6 +55,7 @@ export default function App() {
 
   useEffect(() => { localStorage.setItem(STORAGE_KEY, JSON.stringify(values)); }, [values]);
   useEffect(() => { localStorage.setItem(PERSPECTIVE_KEY, JSON.stringify(perspective)); }, [perspective]);
+  useEffect(() => { localStorage.setItem(PATIENT_KEY, JSON.stringify(patientContext)); }, [patientContext]);
 
   const handleValueChange = useCallback((id, val) => {
     setValues(prev => ({ ...prev, [id]: val === '' ? undefined : val }));
@@ -62,6 +71,16 @@ export default function App() {
       setValues({});
       localStorage.removeItem(STORAGE_KEY);
       setSnapSaved(false);
+    }
+  };
+
+  const handleRestore = (data) => {
+    if (data.values)        { setValues(data.values); localStorage.setItem(STORAGE_KEY, JSON.stringify(data.values)); }
+    if (data.history)       { setHistory(data.history); }
+    if (data.patientContext){ setPatientContext(data.patientContext); }
+    if (data.perspective) {
+      const p = PERSPECTIVES.find(p => p.id === data.perspective);
+      if (p) setPerspective(p);
     }
   };
 
@@ -274,6 +293,19 @@ export default function App() {
                   </button>
                 )}
               </section>
+            )}
+
+            {/* Export & Backup */}
+            {(hasAnyValues || hasHistory) && (
+              <ExportPanel
+                values={values}
+                history={history}
+                perspective={perspective}
+                results={allResults}
+                patientContext={patientContext}
+                onChange={setPatientContext}
+                onRestore={handleRestore}
+              />
             )}
 
             {/* Input section */}
