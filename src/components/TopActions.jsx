@@ -21,7 +21,8 @@ export function TopActions({ actions }) {
   const [open, setOpen] = useState({});
   if (!actions?.length) return null;
 
-  const hasProducts = actions.some(a => a.products?.length);
+  // Show affiliate note only when an action with a product link is expanded
+  const showAffiliateNote = actions.some((a, i) => open[i] && a.products?.length);
 
   return (
     <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm">
@@ -90,7 +91,7 @@ export function TopActions({ actions }) {
         })}
       </div>
 
-      {hasProducts && (
+      {showAffiliateNote && (
         <div className="px-5 py-3 border-t border-stone-50 bg-stone-50/60">
           <p className="text-xs text-stone-400 leading-relaxed">
             <span className="font-semibold text-stone-500">Affiliate links:</span> Product links above are Amazon affiliate links. We earn a small commission at no extra cost to you — this is how we keep the tool free.
