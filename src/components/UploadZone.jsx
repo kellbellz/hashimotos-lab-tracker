@@ -76,7 +76,7 @@ export function UploadZone({ onParsed }) {
 
       try {
         const text = await extractText(file);
-        if (text && text.trim().length >= 20) {
+        if (text && text.trim().length >= 3) {
           const type = detectReportType(text);
           if (type) detectedTypes.push(type);
           const parsed = parseTextForMarkers(text);

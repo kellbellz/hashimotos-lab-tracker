@@ -314,13 +314,14 @@ export async function extractTextFromPDF(file) {
 }
 
 // Extract text from an image using Tesseract.js (client-side OCR).
-// Runs a quick English-only pass first to detect the script, then re-runs
-// with the appropriate language pack if non-Latin characters are found.
+// Runs an English-only pass first. For ASCII-only results (the vast majority
+// of lab reports) that result is returned directly — no second pass needed.
+// Only re-runs with a targeted multilingual pack when non-ASCII characters
+// are detected (accented Latin, Cyrillic, Arabic, CJK, etc.).
 export async function extractTextFromImage(file) {
   const { createWorker } = await import('tesseract.js');
   const url = URL.createObjectURL(file);
   try {
-    // First pass: English only (fast) — used purely for script detection
     const probe = await createWorker('eng');
     let probeText = '';
     try {
@@ -330,10 +331,13 @@ export async function extractTextFromImage(file) {
       await probe.terminate();
     }
 
-    const langs = detectOcrLangs(probeText);
-    if (langs === 'eng') return probeText; // Latin only — reuse probe result
+    // ASCII-only output means a standard English or numeric lab report —
+    // the English model is already optimal, no second pass needed.
+    const hasNonAscii = /[^\x00-\x7F]/.test(probeText);
+    if (!hasNonAscii) return probeText;
 
-    // Second pass: full multilingual OCR
+    // Non-ASCII detected: redo with the appropriate language pack.
+    const langs = detectOcrLangs(probeText);
     const worker = await createWorker(langs);
     try {
       const { data: { text } } = await worker.recognize(url);
