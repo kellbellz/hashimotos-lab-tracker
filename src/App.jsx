@@ -245,7 +245,7 @@ export default function App() {
                   </span>
                   <span className="text-xs text-stone-400 ml-1">Tap each to expand</span>
                 </div>
-                <Takeaways takeaways={takeaways} />
+                <Takeaways takeaways={takeaways} results={allResults} />
               </section>
             )}
 

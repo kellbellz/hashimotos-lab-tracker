@@ -581,6 +581,10 @@ export function generateTakeaways(results, perspective) {
     });
   }
 
+  // Red (high) takeaways always surface first
+  const priorityOrder = { high: 0, medium: 1, good: 2 };
+  takeaways.sort((a, b) => (priorityOrder[a.priority] ?? 1) - (priorityOrder[b.priority] ?? 1));
+
   return takeaways;
 }
 
