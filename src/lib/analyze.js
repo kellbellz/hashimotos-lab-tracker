@@ -270,7 +270,8 @@ export function generateTakeaways(results, perspective) {
   }
 
   // ─── Reverse T3 ───────────────────────────────────────────────────────────────
-  if (rt3 && (rt3.status === STATUS.CRITICAL || rt3.status === STATUS.CONCERN)) {
+  // Only flag high RT3 — low RT3 is clinically favorable (good T4→T3 conversion).
+  if (rt3 && rt3.direction === 'high' && (rt3.status === STATUS.CRITICAL || rt3.status === STATUS.CONCERN)) {
     const ratio = ft3 ? (ft3.value / rt3.value).toFixed(2) : null;
     const ratioOk = ratio ? parseFloat(ratio) >= 0.2 : null;
     takeaways.push({
@@ -788,7 +789,7 @@ export function generateTopActions(results, perspective) {
     });
   }
 
-  if (rt3 && rt3.status !== STATUS.OPTIMAL) {
+  if (rt3 && rt3.direction === 'high' && rt3.status !== STATUS.OPTIMAL) {
     candidates.push({
       weight: 60,
       label: 'Get Tested',

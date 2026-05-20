@@ -141,8 +141,8 @@ export const MARKERS = [
       // Chinese
       '反式三碘甲腺原氨酸', '逆t3',
     ],
-    standard: { low: 9.2, high: 24.1 },
-    optimal: { low: 9.2, high: 15.0 },
+    standard: { low: 0, high: 24.1 },
+    optimal: { low: 0, high: 15.0 },
     priority: 3,
     description: 'An inactive form of T3 that blocks active T3 from working. High levels indicate your body is converting T4 to the wrong form.',
     highConcern: 'Elevated Reverse T3 can block active T3 and cause hypothyroid symptoms even when other labs look normal. Triggered by stress, inflammation, low iron, or low-calorie diets.',
