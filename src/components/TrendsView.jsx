@@ -113,7 +113,7 @@ export function TrendsView({ snapshots, onHistoryChange, perspective }) {
       <div className="bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm">
         <div className="px-5 pt-4 pb-3 border-b border-stone-50">
           <h3 className="font-extrabold text-stone-800 text-sm">Saved Snapshots</h3>
-          <p className="text-xs text-stone-400 mt-0.5">{snapshots.length} saved — tap a row to see details</p>
+          <p className="text-xs text-stone-400 mt-0.5">{snapshots.length} saved - tap a row to see details</p>
         </div>
 
         <div className="divide-y divide-stone-50">

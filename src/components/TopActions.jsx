@@ -30,7 +30,7 @@ export function TopActions({ actions }) {
         <h2 className="text-base font-extrabold text-stone-800">Your Top Next Steps</h2>
         <p className="text-xs text-stone-400 mt-0.5">Based on your most urgent results</p>
         <p className="text-xs text-stone-600 mt-2.5 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2 leading-relaxed">
-          General recommendations based on your lab values — not medical advice. Always check with your doctor before starting a supplement or changing treatment.
+          General recommendations based on your lab values - not medical advice. Always check with your doctor before starting a supplement or changing treatment.
         </p>
       </div>
 
@@ -63,7 +63,7 @@ export function TopActions({ actions }) {
                     <ChevronDown className={`w-4 h-4 shrink-0 mt-0.5 text-stone-400 group-hover:text-stone-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
                   </button>
 
-                  {/* Detail — collapsible */}
+                  {/* Detail - collapsible */}
                   {isOpen && (
                     <div className="mt-2 space-y-3">
                       <p className="text-sm text-stone-500 leading-relaxed">{action.detail}</p>
@@ -94,7 +94,7 @@ export function TopActions({ actions }) {
       {showAffiliateNote && (
         <div className="px-5 py-3 border-t border-stone-50 bg-stone-50/60">
           <p className="text-xs text-stone-400 leading-relaxed">
-            <span className="font-semibold text-stone-500">Affiliate links:</span> Product links above are Amazon affiliate links. We earn a small commission at no extra cost to you — this is how we keep the tool free.
+            <span className="font-semibold text-stone-500">Affiliate links:</span> Product links above are Amazon affiliate links. We earn a small commission at no extra cost to you - this is how we keep the tool free.
           </p>
         </div>
       )}

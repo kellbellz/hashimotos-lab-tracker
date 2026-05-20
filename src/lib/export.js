@@ -99,7 +99,7 @@ export function openPhysicianReport(results, patientContext = {}, perspective) {
           <td class="full-name">${res.marker.fullName}</td>
           <td class="value-cell">${r(res.value)} ${res.marker.unit}</td>
           <td>${res.marker.standard.low}–${res.marker.standard.high}</td>
-          <td>${opt ? `${opt.low}–${opt.high}` : '—'}</td>
+          <td>${opt ? `${opt.low}–${opt.high}` : '-'}</td>
           <td>${statusBadge(res.status)}</td>
         </tr>`;
       }).join('');
@@ -123,7 +123,7 @@ export function openPhysicianReport(results, patientContext = {}, perspective) {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lab Results Summary${name ? ` — ${name}` : ''}</title>
+<title>Lab Results Summary${name ? ` - ${name}` : ''}</title>
 <style>
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#1c1917;background:#fff;padding:40px;max-width:840px;margin:0 auto;font-size:14px;line-height:1.5}

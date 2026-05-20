@@ -14,7 +14,7 @@ export function PerspectiveSelector({ perspective, onChange }) {
         >
           {PERSPECTIVES.map(p => (
             <option key={p.id} value={p.id}>
-              {p.emoji}  {p.name} — {p.description}
+              {p.emoji}  {p.name} - {p.description}
             </option>
           ))}
         </select>

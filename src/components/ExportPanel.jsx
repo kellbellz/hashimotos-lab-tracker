@@ -88,7 +88,7 @@ export function ExportPanel({ values, history, perspective, results, patientCont
               </div>
               <div>
                 <p className="text-sm font-bold text-teal-900">Download Backup</p>
-                <p className="text-xs text-teal-700 mt-0.5">JSON file — restore anytime</p>
+                <p className="text-xs text-teal-700 mt-0.5">JSON file - restore anytime</p>
               </div>
             </button>
 

@@ -80,7 +80,7 @@ export function Takeaways({ takeaways, results }) {
 
         return (
           <div key={i} className={`rounded-2xl border overflow-hidden ${styles.wrapper}`}>
-            {/* Header — always visible */}
+            {/* Header - always visible */}
             <button
               className={`w-full text-left flex items-start gap-3 px-4 py-3.5 transition-colors ${styles.header}`}
               onClick={() => setOpen(prev => ({ ...prev, [i]: !prev[i] }))}
@@ -89,7 +89,7 @@ export function Takeaways({ takeaways, results }) {
               <div className="flex-1 min-w-0">
                 <p className={`font-bold text-sm leading-snug ${styles.title}`}>{t.title}</p>
 
-                {/* Lab value + range chip — visible in collapsed state */}
+                {/* Lab value + range chip - visible in collapsed state */}
                 {related && (
                   <div className="flex flex-wrap items-center gap-2 mt-1.5">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-lg border ${styles.valueBg}`}>

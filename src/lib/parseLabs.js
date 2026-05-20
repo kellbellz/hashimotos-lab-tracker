@@ -32,7 +32,7 @@ function detectOcrLangs(text) {
   return [...langs].join('+');
 }
 
-// Known unit strings — used to detect value lines and strip them during cleanup.
+// Known unit strings - used to detect value lines and strip them during cleanup.
 const UNIT_PATTERN = /\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|g\/dL|ug\/dL|mcg\/dL|mcg\/L|nmol\/L|mL\/min|%|mlU\/L)\b/i;
 
 // Lines that should be skipped when looking for a value near a matched test name.
@@ -81,7 +81,7 @@ function extractValue(rawLine) {
     if (!isNaN(num) && !isNaN(num)) return num;
   }
 
-  // Strategy 2b: Colon-separated "Test Name: 2.35 mIU/L" — Epic & hospital portals
+  // Strategy 2b: Colon-separated "Test Name: 2.35 mIU/L" - Epic & hospital portals
   if (UNIT_PATTERN.test(rawLine)) {
     const colonMatch = rawLine.match(/:\s*([<>]?\s*\d+\.?\d*)\s*(?:mIU\/L|ng\/dL|pg\/mL|IU\/mL|ng\/mL|mg\/L|mcg\/L|ug\/dL|nmol\/L|%|uIU\/mL)/i);
     if (colonMatch) {
@@ -125,7 +125,7 @@ function shouldSkipLine(line) {
 // Two-pass strategy so that a labeled value ("Valor 15") anywhere in the window
 // beats a bare axis-label number ("97") that happens to appear first in the text.
 function extractNearby(lines, matchIdx, lookahead = 5) {
-  // Pass 1 — prefer lines where extractValue finds a labeled or unit-bearing value.
+  // Pass 1 - prefer lines where extractValue finds a labeled or unit-bearing value.
   // This catches "Valor 15", "Result: 0.85", "15 ng/mL", etc.
   for (let offset = 0; offset <= lookahead; offset++) {
     const line = (lines[matchIdx + offset] || '').trim();
@@ -134,7 +134,7 @@ function extractNearby(lines, matchIdx, lookahead = 5) {
     if (val !== null) return val;
   }
 
-  // Pass 2 — fall back to a bare single number only if no labeled value was found.
+  // Pass 2 - fall back to a bare single number only if no labeled value was found.
   // Common in Epic where value and unit are in separate columns → separate lines.
   for (let offset = 0; offset <= lookahead; offset++) {
     const line = (lines[matchIdx + offset] || '').trim();
@@ -158,7 +158,7 @@ export function parseTextForMarkers(rawText) {
   for (const marker of MARKERS) {
     if (found[marker.id] !== undefined) continue;
 
-    // Longest aliases first — more specific matches win
+    // Longest aliases first - more specific matches win
     const sortedAliases = [...marker.aliases].sort((a, b) => b.length - a.length);
 
     outer:
@@ -212,7 +212,7 @@ async function renderPageToDataUrl(page, scale = 2.0) {
 
 // OCR fallback: render PDF pages to canvas, then run Tesseract on them.
 // Pass nativeText (if any) so we can detect the document's script and load
-// the right language pack — e.g. Russian, Arabic, CJK, etc.
+// the right language pack - e.g. Russian, Arabic, CJK, etc.
 async function ocrPdfPages(pdf, nativeText = '') {
   const { createWorker } = await import('tesseract.js');
   const langs = detectOcrLangs(nativeText);
@@ -293,7 +293,7 @@ export async function extractTextFromPDF(file) {
       return fullText;
     }
 
-    console.log('[LabParser] PDF has no native text — falling back to canvas OCR');
+    console.log('[LabParser] PDF has no native text - falling back to canvas OCR');
   } catch (err) {
     console.warn('[LabParser] Native text extraction failed, trying canvas OCR:', err?.message);
   }
@@ -320,7 +320,7 @@ export async function extractTextFromImage(file) {
   const { createWorker } = await import('tesseract.js');
   const url = URL.createObjectURL(file);
   try {
-    // First pass: English only (fast) — used purely for script detection
+    // First pass: English only (fast) - used purely for script detection
     const probe = await createWorker('eng');
     let probeText = '';
     try {
@@ -331,7 +331,7 @@ export async function extractTextFromImage(file) {
     }
 
     const langs = detectOcrLangs(probeText);
-    if (langs === 'eng') return probeText; // Latin only — reuse probe result
+    if (langs === 'eng') return probeText; // Latin only - reuse probe result
 
     // Second pass: full multilingual OCR
     const worker = await createWorker(langs);

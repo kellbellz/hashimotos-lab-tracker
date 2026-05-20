@@ -3,7 +3,7 @@ import { FileText, Image, Loader2, ChevronDown, ChevronUp, Copy, Check } from 'l
 import { extractTextFromPDF, extractTextFromImage, parseTextForMarkers } from '../lib/parseLabs.js';
 import { MARKERS } from '../data/markers.js';
 
-// Marker IDs that belong to the thyroid/antibodies categories — used to detect
+// Marker IDs that belong to the thyroid/antibodies categories - used to detect
 // whether an upload contained any thyroid-specific results.
 const THYROID_IDS = new Set(
   MARKERS.filter(m => m.category === 'thyroid' || m.category === 'antibodies').map(m => m.id)
@@ -95,7 +95,7 @@ export function UploadZone({ onParsed }) {
       const typeLabel = detectedTypes[0] || null;
       if (typeLabel) {
         setStatus('warning');
-        setMessage(`Got your ${typeLabel} — no values we track were found in this one.`);
+        setMessage(`Got your ${typeLabel} - no values we track were found in this one.`);
         setSubMessage(
           'Upload your thyroid panel too to see your full picture. Look for a report that includes TSH, Free T4, Free T3, or TPO antibodies.'
         );
@@ -110,7 +110,7 @@ export function UploadZone({ onParsed }) {
       return;
     }
 
-    // Values found — call onParsed and check if any are thyroid markers
+    // Values found - call onParsed and check if any are thyroid markers
     onParsed(allParsed);
     const hasThyroid = Object.keys(allParsed).some(id => THYROID_IDS.has(id));
     const fileWord = validFiles.length === 1 ? 'file' : `${validFiles.length} files`;
@@ -147,7 +147,7 @@ export function UploadZone({ onParsed }) {
 
   return (
     <div className="space-y-3">
-      {/* Drop zone — always visible so users can keep adding files */}
+      {/* Drop zone - always visible so users can keep adding files */}
       <div
         className={`border-2 border-dashed rounded-2xl p-8 text-center transition-colors cursor-pointer
           ${dragOver ? 'border-teal-300 bg-teal-50' : 'border-stone-200 hover:border-stone-300 bg-stone-50/50'}`}
@@ -203,14 +203,14 @@ export function UploadZone({ onParsed }) {
             <div className="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">
               <p className="text-sm text-amber-800 font-semibold">No thyroid markers found yet.</p>
               <p className="text-sm text-amber-700 mt-0.5 leading-relaxed">
-                Upload your thyroid panel too — look for a report with TSH, Free T4, Free T3, or TPO antibodies.
+                Upload your thyroid panel too - look for a report with TSH, Free T4, Free T3, or TPO antibodies.
               </p>
             </div>
           )}
         </div>
       )}
 
-      {/* Warning — text extracted but nothing (or no thyroid markers) found */}
+      {/* Warning - text extracted but nothing (or no thyroid markers) found */}
       {status === 'warning' && (
         <div className="space-y-2">
           <div className="bg-amber-50 rounded-xl px-3 py-2.5 border border-amber-100">

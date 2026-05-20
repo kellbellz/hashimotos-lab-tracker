@@ -34,7 +34,7 @@ export function ManualEntry({ values, onChange, perspective }) {
                   <input
                     type="number"
                     step="any"
-                    placeholder="—"
+                    placeholder="-"
                     value={values[marker.id] ?? ''}
                     onChange={e => onChange(marker.id, e.target.value)}
                     className="w-full border border-stone-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-teal-300 focus:border-transparent"
