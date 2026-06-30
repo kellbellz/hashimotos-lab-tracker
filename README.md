@@ -6,14 +6,24 @@ A self-contained tool that (1) estimates what house you can afford from income
 and savings, (2) splits that into upfront vs. monthly spending power, and (3)
 stress-tests it against a fixer-upper's repair list with offer recommendations.
 
-**Live URL:** https://kellbellz.github.io/hashimotos-lab-tracker/home-affordability.html
+### Use it from a URL
 
-The page is published automatically by the GitHub Pages workflow
-(`.github/workflows/deploy.yml`) on every push. One-time setup: in the repo's
-**Settings → Pages**, set **Source** to **GitHub Actions** (the workflow also
-attempts to enable this automatically). Locally it's served at
-`/home-affordability.html` when you run `npm run dev`, or just open
-`public/home-affordability.html` in a browser.
+**Instant (no setup)** - the tool is a single self-contained file, so a raw-HTML
+viewer can serve it straight from this branch:
+
+https://htmlpreview.github.io/?https://raw.githubusercontent.com/kellbellz/hashimotos-lab-tracker/claude/home-affordability-repair-calc-ggqjqe/public/home-affordability.html
+
+**Permanent (one-time setup)** - GitHub Pages gives a clean, fast URL:
+
+https://kellbellz.github.io/hashimotos-lab-tracker/home-affordability.html
+
+Enable it once: repo **Settings → Pages → Build and deployment → Source: GitHub
+Actions**. After that, the workflow in `.github/workflows/deploy.yml` builds and
+publishes on every push automatically (until Pages is enabled the workflow's
+`configure-pages` step will fail - that is expected).
+
+**Local** - served at `/home-affordability.html` when you run `npm run dev`, or
+just open `public/home-affordability.html` directly in any browser.
 
 ---
 
