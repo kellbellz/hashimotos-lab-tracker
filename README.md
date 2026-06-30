@@ -1,5 +1,22 @@
 # React + Vite
 
+## 🏡 Home Affordability & Repair Reality Check
+
+A self-contained tool that (1) estimates what house you can afford from income
+and savings, (2) splits that into upfront vs. monthly spending power, and (3)
+stress-tests it against a fixer-upper's repair list with offer recommendations.
+
+**Live URL:** https://kellbellz.github.io/hashimotos-lab-tracker/home-affordability.html
+
+The page is published automatically by the GitHub Pages workflow
+(`.github/workflows/deploy.yml`) on every push. One-time setup: in the repo's
+**Settings → Pages**, set **Source** to **GitHub Actions** (the workflow also
+attempts to enable this automatically). Locally it's served at
+`/home-affordability.html` when you run `npm run dev`, or just open
+`public/home-affordability.html` in a browser.
+
+---
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
