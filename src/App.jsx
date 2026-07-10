@@ -6,6 +6,7 @@ import { MarkerCard } from './components/MarkerCard.jsx';
 import { Takeaways } from './components/Takeaways.jsx';
 import { TopActions } from './components/TopActions.jsx';
 import { UploadZone } from './components/UploadZone.jsx';
+import { PasteZone } from './components/PasteZone.jsx';
 import { ManualEntry } from './components/ManualEntry.jsx';
 import { PerspectiveSelector } from './components/PerspectiveSelector.jsx';
 import { TrendsView } from './components/TrendsView.jsx';
@@ -322,6 +323,12 @@ export default function App() {
                     Upload
                   </button>
                   <button
+                    className={`px-3 py-1.5 font-semibold transition-colors ${inputMode === 'paste' ? 'bg-teal-500 text-white' : 'text-stone-500 hover:bg-stone-50'}`}
+                    onClick={() => setInputMode('paste')}
+                  >
+                    Paste
+                  </button>
+                  <button
                     className={`px-3 py-1.5 font-semibold transition-colors ${inputMode === 'manual' ? 'bg-teal-500 text-white' : 'text-stone-500 hover:bg-stone-50'}`}
                     onClick={() => setInputMode('manual')}
                   >
@@ -329,6 +336,10 @@ export default function App() {
                   </button>
                 </div>
               </div>
+
+              {inputMode === 'paste' && (
+                <PasteZone onParsed={handleParsed} />
+              )}
 
               {inputMode === 'upload' && (
                 <>

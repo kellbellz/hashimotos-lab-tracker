@@ -53,10 +53,21 @@ function stripRanges(str) {
 
 // Pull a plausible numeric value from a single raw line.
 function extractValue(rawLine) {
-  // Strategy 1: LabCorp/Quest flag code pattern "01 VALUE" or "A, 02 VALUE"
+  // Strategy 1: LabCorp/Quest standalone flag code " 01 VALUE" or "A, 02 VALUE"
+  // Requires a word boundary before the flag code (flag code is separate from test name).
   const flagMatch = rawLine.match(/\b(?:[A-Z],?\s*)?0[0-9]\b\s*([<>]?\s*\d+\.?\d*)/);
   if (flagMatch) {
     const num = parseFloat(flagMatch[1].replace(/[<>]/g, ''));
+    if (!isNaN(num) && num >= 0) return num;
+  }
+
+  // Strategy 1b: LabCorp concatenated flag code — "TSH01 1.860", "Ferritin01 86",
+  // "Vitamin D, 25-Hydroxy01 21.2".  LabCorp sometimes writes the lab code directly
+  // against the last character of the test name (no space), so "\b" never fires in
+  // Strategy 1.  Match any word-char + "0" + digit + whitespace + value.
+  const concatMatch = rawLine.match(/\w0[0-9]\s+([<>]?\s*\d+\.?\d*)/);
+  if (concatMatch) {
+    const num = parseFloat(concatMatch[1].replace(/[<>]/g, ''));
     if (!isNaN(num) && num >= 0) return num;
   }
 
