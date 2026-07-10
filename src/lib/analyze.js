@@ -868,14 +868,14 @@ export function generateTopActions(results, perspective) {
   // ── Diet actions ─────────────────────────────────────────────────────────────
   if (hasHighAb && crp && crp.status !== STATUS.OPTIMAL) {
     candidates.push({
-      weight: 78,
+      weight: 90,
       label: 'Change Your Diet',
       title: 'Cut out gluten completely for 3 months',
       detail: `Your high antibodies and elevated inflammation (CRP ${r(crp.value)}) both point to gluten as a likely trigger - this means fully gluten-free, not just "less bread." Retest your antibodies after 3 months.`,
     });
   } else if (hasHighAb) {
     candidates.push({
-      weight: 62,
+      weight: 87,
       label: 'Change Your Diet',
       title: 'Cut out gluten completely for 3 months',
       detail: 'Going fully gluten-free is the single best-studied diet change for lowering TPO antibodies. Commit to strict elimination - even small amounts can keep inflammation going - and retest at 3 months.',
