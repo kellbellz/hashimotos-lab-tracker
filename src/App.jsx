@@ -123,13 +123,21 @@ export default function App() {
             </div>
           </div>
           {hasAnyValues && (
-            <button
-              onClick={handleClear}
-              className="shrink-0 flex items-center gap-1.5 text-xs text-stone-500 hover:text-rose-500 transition-colors border border-stone-200 hover:border-rose-200 rounded-lg px-2.5 py-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Clear all
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => document.getElementById('add-labs-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                className="flex items-center gap-1.5 text-xs font-bold text-white bg-teal-500 hover:bg-teal-600 transition-colors rounded-lg px-2.5 py-1.5"
+              >
+                + Add labs
+              </button>
+              <button
+                onClick={handleClear}
+                className="flex items-center gap-1.5 text-xs text-stone-500 hover:text-rose-500 transition-colors border border-stone-200 hover:border-rose-200 rounded-lg px-2.5 py-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                Clear all
+              </button>
+            </div>
           )}
         </div>
       </header>
@@ -311,7 +319,7 @@ export default function App() {
             )}
 
             {/* Input section */}
-            <section className="bg-white rounded-2xl border border-stone-100 p-5 space-y-4 shadow-sm">
+            <section id="add-labs-section" className="bg-white rounded-2xl border border-stone-100 p-5 space-y-4 shadow-sm">
               <div className="flex items-center justify-between">
                 <h2 className="text-base font-bold text-stone-800">
                   {hasAnyValues ? 'Add / Update Labs' : 'Enter Your Lab Results'}
