@@ -33,7 +33,7 @@ function detectOcrLangs(text) {
 }
 
 // Known unit strings - used to detect value lines and strip them during cleanup.
-const UNIT_PATTERN = /\b(mg\/dL|mg\/L|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|umol\/L|g\/dL|ug\/dL|mcg\/dL|mcg\/L|nmol\/L|mL\/min|%|mlU\/L)\b/i;
+const UNIT_PATTERN = /\b(mg\/dL|mg\/L|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|U\/L|mmol\/L|umol\/L|g\/dL|ug\/dL|mcg\/dL|mcg\/L|nmol\/L|mL\/min|%|mlU\/L)\b/i;
 // Catches "5.4 %" and "3.4 % by wt" where a space before "%" breaks the \b boundary.
 const PCT_PATTERN = /\d\s*%/;
 
@@ -199,16 +199,42 @@ export function parseTextForMarkers(rawText) {
         // "iron" that would keep matching in suffix windows because "iron saturation"
         // also contains "iron"); fall back to the shrinking-suffix search only when
         // the alias spans multiple lines (e.g. "Thyroid\nStimulating Hormone").
+        //
+        // Direct-line word-boundary rules (prevents "insulin" from matching
+        // "Insulin Resistance Score..." and "apolipoprotein b" from matching
+        // "Apolipoprotein B/A1 Ratio"):
+        //   1. Exact match:  normLine === normalAlias
+        //   2. Ends with:    normLine ends with " <alias>" (alias is the tail)
+        //   3. Short suffix: normLine starts with "<alias> " and the remainder
+        //      is a brief abbreviation/qualifier (≤2 words, ≤8 chars), e.g.
+        //      "alanine aminotransferase alt" → suffix "alt" (3) → ACCEPT
+        //      "hemoglobin a1c hba1c"        → suffix "a1c hba1c" (9) → REJECT
         let aliasLineIdx = i;
         let foundDirect = false;
+        let foundOnSingleLine = false; // alias present on one line but word-boundary rejected it
         for (let w = 0; w < windowLines.length; w++) {
-          if (normalize(windowLines[w]).includes(normalAlias)) {
+          const normLine = normalize(windowLines[w]);
+          if (!normLine.includes(normalAlias)) continue;
+          foundOnSingleLine = true;
+          const isExact = normLine === normalAlias;
+          const endsWithAlias = normLine.endsWith(' ' + normalAlias);
+          const suffix = normLine.startsWith(normalAlias + ' ') ? normLine.slice(normalAlias.length + 1) : null;
+          const isShortSuffix = suffix !== null && suffix.split(' ').length <= 2 && suffix.length <= 8;
+          if (isExact || endsWithAlias || isShortSuffix) {
             aliasLineIdx = i + w;
             foundDirect = true;
             break;
           }
         }
-        if (!foundDirect) {
+        // If the alias was present on a single window line but word-boundary rules
+        // rejected it (e.g. "insulin" inside "Insulin Resistance Score - C-Peptide"),
+        // skip this position entirely so the scanner keeps looking for a better match
+        // (e.g. a standalone "Insulin" line later in the text).
+        if (!foundDirect && foundOnSingleLine) continue;
+
+        // Only fall back to multi-line suffix search when the alias genuinely
+        // spans multiple lines (no single window line contained the full alias).
+        if (!foundDirect && !foundOnSingleLine) {
           for (let w = 0; w < windowLines.length; w++) {
             const suffixNorm = normalize(windowLines.slice(w).join(' '));
             if (suffixNorm.includes(normalAlias)) {

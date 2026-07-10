@@ -448,7 +448,7 @@ export const MARKERS = [
     category: 'nutrients',
     aliases: [
       'iron serum', 'serum iron', 'iron total', 'iron level', 'iron blood',
-      'iron total serum', 'fe serum',
+      'iron total serum', 'fe serum', 'iron',
       // Spanish / Portuguese
       'hierro sérico', 'hierro total', 'ferro sérico',
       // French
