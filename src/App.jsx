@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Activity, Shield, Trash2, ChevronDown, ChevronUp, TrendingUp, FlaskConical, Save, Check } from 'lucide-react';
 import { analyzeAllMarkers, generateTakeaways, generateTopActions, sortByUrgency, STATUS } from './lib/analyze.js';
-import { loadHistory, saveSnapshot } from './lib/history.js';
+import { loadHistory, saveSnapshot, clearHistory } from './lib/history.js';
 import { MarkerCard } from './components/MarkerCard.jsx';
 import { Takeaways } from './components/Takeaways.jsx';
 import { TopActions } from './components/TopActions.jsx';
@@ -68,9 +68,10 @@ export default function App() {
   }, []);
 
   const handleClear = () => {
-    if (confirm('Clear all entered lab values? This cannot be undone.')) {
+    if (confirm('Clear all lab values and trend history? This cannot be undone.')) {
       setValues({});
       localStorage.removeItem(STORAGE_KEY);
+      setHistory(clearHistory());
       setSnapSaved(false);
     }
   };
