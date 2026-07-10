@@ -219,7 +219,10 @@ export function parseTextForMarkers(rawText) {
           const isExact = normLine === normalAlias;
           const endsWithAlias = normLine.endsWith(' ' + normalAlias);
           const suffix = normLine.startsWith(normalAlias + ' ') ? normLine.slice(normalAlias.length + 1) : null;
-          const isShortSuffix = suffix !== null && suffix.split(' ').length <= 2 && suffix.length <= 8;
+          const isShortSuffix = suffix !== null && (
+            /^\d/.test(suffix) ||                                        // suffix starts with a value (LabCorp inline: "TSH 5.46 mIU/L")
+            (suffix.split(' ').length <= 2 && suffix.length <= 8)        // short abbreviation/qualifier
+          );
           if (isExact || endsWithAlias || isShortSuffix) {
             aliasLineIdx = i + w;
             foundDirect = true;

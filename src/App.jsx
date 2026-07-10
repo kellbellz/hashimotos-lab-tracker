@@ -338,7 +338,10 @@ export default function App() {
               </div>
 
               {inputMode === 'paste' && (
-                <PasteZone onParsed={handleParsed} />
+                <PasteZone
+                  onParsed={handleParsed}
+                  onSave={(date) => { const updated = saveSnapshot(values, date); setHistory(updated); }}
+                />
               )}
 
               {inputMode === 'upload' && (
