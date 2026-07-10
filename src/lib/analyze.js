@@ -748,8 +748,8 @@ export function generateTopActions(results, perspective) {
       candidates.push({
         weight: 88,
         label: 'Change Your Diet',
-        title: 'Cut refined carbs and always eat protein with every meal',
-        detail: `Your HbA1c of ${r(hba1c.value)}% shows blood sugar running high - removing white bread, white rice, and sugary drinks while adding protein to every meal is the fastest way to bring it down.`,
+        title: 'Never eat carbs alone - always pair with protein or fat',
+        detail: `Your HbA1c of ${r(hba1c.value)}% shows blood sugar running high. Pairing every carb with protein or fat slows the blood sugar spike - this one habit (before removing anything) is the fastest way to bring it down. White bread, white rice, and sugary drinks alone are the biggest drivers.`,
       });
     }
 
