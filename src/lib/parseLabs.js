@@ -37,7 +37,7 @@ const UNIT_PATTERN = /\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L
 
 // Lines that should be skipped when looking for a value near a matched test name.
 // Includes common status words in English + the 11 supported languages.
-const SKIP_LINE = /^(normal|abnormal|high|low|critical|final|preliminary|pending|in\s+range|out\s+of\s+range|reference\s+range|ref\s+range|units?|component|your\s+value|standard\s+range|flag|status|result\s+type|valor\s+normal|rango\s+de\s+referencia|rango\s+normal|valeur\s+normale|referenzbereich|normalwert|참고범위|正常範囲|anormal|alto|baja|bajo|alta|crítico|critico|eleve|bas|critique|hoch|niedrig|kritisch|норма|нормально|высокий|низкий|正常|异常|高|低|정상|비정상|높음|낮음|طبيعي|مرتفع|منخفض|सामान्य|असामान्य)$/iu;
+const SKIP_LINE = /^(normal|abnormal|high|low|critical|final|preliminary|pending|in\s+range|out\s+of\s+range|above\s+range|below\s+range|reference\s+range|ref\s+range|units?|component|your\s+value|standard\s+range|flag|status|result\s+type|valor\s+normal|rango\s+de\s+referencia|rango\s+normal|valeur\s+normale|referenzbereich|normalwert|참고범위|正常範囲|anormal|alto|baja|bajo|alta|crítico|critico|eleve|bas|critique|hoch|niedrig|kritisch|норма|нормально|высокий|низкий|正常|异常|高|低|정상|비정상|높음|낮음|طبيعي|مرتفع|منخفض|सामान्य|असामान्य)$/iu;
 
 // Remove a reference range like "0.40 - 4.50" or "0.40-4.50" from a string.
 function stripRanges(str) {
@@ -188,13 +188,27 @@ export function parseTextForMarkers(rawText) {
 
         if (!normWindow.includes(normalAlias)) continue;
 
+        // Find the first line in the window where the alias actually starts.
+        // The 4-line window can fire one line early (e.g. lines[i] is the previous
+        // marker's value, and the alias text begins at lines[i+1]).  Scanning forward
+        // until the alias disappears from the remaining suffix gives us the true start.
+        let aliasLineIdx = i;
+        for (let w = 0; w < windowLines.length; w++) {
+          const suffixNorm = normalize(windowLines.slice(w).join(' '));
+          if (suffixNorm.includes(normalAlias)) {
+            aliasLineIdx = i + w;
+          } else {
+            break;
+          }
+        }
+
         // First try extracting from the 2-line window (LabCorp / Quest inline format)
-        const twoLineRaw = windowLines[0] + ' ' + windowLines[1];
+        const twoLineRaw = (lines[aliasLineIdx] || '') + ' ' + (lines[aliasLineIdx + 1] || '');
         let value = extractValue(twoLineRaw);
 
         // If that failed, scan the nearby lines individually (Epic multi-row format)
         if (value === null) {
-          value = extractNearby(lines, i, 5);
+          value = extractNearby(lines, aliasLineIdx, 5);
         }
 
         if (value !== null) {
