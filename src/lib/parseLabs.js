@@ -33,7 +33,9 @@ function detectOcrLangs(text) {
 }
 
 // Known unit strings - used to detect value lines and strip them during cleanup.
-const UNIT_PATTERN = /\b(mg\/dL|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|g\/dL|ug\/dL|mcg\/dL|mcg\/L|nmol\/L|mL\/min|%|mlU\/L)\b/i;
+const UNIT_PATTERN = /\b(mg\/dL|mg\/L|pg\/mL|ng\/mL|ng\/dL|mIU\/L|uIU\/mL|IU\/mL|IU\/L|mmol\/L|umol\/L|g\/dL|ug\/dL|mcg\/dL|mcg\/L|nmol\/L|mL\/min|%|mlU\/L)\b/i;
+// Catches "5.4 %" and "3.4 % by wt" where a space before "%" breaks the \b boundary.
+const PCT_PATTERN = /\d\s*%/;
 
 // Lines that should be skipped when looking for a value near a matched test name.
 // Includes common status words in English + the 11 supported languages.
@@ -103,7 +105,8 @@ function extractValue(rawLine) {
 
   // Strategy 3: Strip known non-value tokens, then grab the first plausible number.
   // Only attempt when we can confirm there are known units on the line.
-  if (UNIT_PATTERN.test(rawLine)) {
+  // PCT_PATTERN catches "5.4 %" / "3.4 % by wt" where a space before "%" breaks \b.
+  if (UNIT_PATTERN.test(rawLine) || PCT_PATTERN.test(rawLine)) {
     const cleaned = stripRanges(rawLine);
     const nums = [...cleaned.matchAll(/\b(\d+\.?\d*)\b/g)];
     for (const m of nums) {
@@ -188,17 +191,31 @@ export function parseTextForMarkers(rawText) {
 
         if (!normWindow.includes(normalAlias)) continue;
 
-        // Find the first line in the window where the alias actually starts.
+        // Find the first line in the window where the alias actually begins.
         // The 4-line window can fire one line early (e.g. lines[i] is the previous
-        // marker's value, and the alias text begins at lines[i+1]).  Scanning forward
-        // until the alias disappears from the remaining suffix gives us the true start.
+        // marker's value and the alias text begins at lines[i+1]).
+        //
+        // Two-step: prefer a direct single-line match (handles short aliases like
+        // "iron" that would keep matching in suffix windows because "iron saturation"
+        // also contains "iron"); fall back to the shrinking-suffix search only when
+        // the alias spans multiple lines (e.g. "Thyroid\nStimulating Hormone").
         let aliasLineIdx = i;
+        let foundDirect = false;
         for (let w = 0; w < windowLines.length; w++) {
-          const suffixNorm = normalize(windowLines.slice(w).join(' '));
-          if (suffixNorm.includes(normalAlias)) {
+          if (normalize(windowLines[w]).includes(normalAlias)) {
             aliasLineIdx = i + w;
-          } else {
+            foundDirect = true;
             break;
+          }
+        }
+        if (!foundDirect) {
+          for (let w = 0; w < windowLines.length; w++) {
+            const suffixNorm = normalize(windowLines.slice(w).join(' '));
+            if (suffixNorm.includes(normalAlias)) {
+              aliasLineIdx = i + w;
+            } else {
+              break;
+            }
           }
         }
 

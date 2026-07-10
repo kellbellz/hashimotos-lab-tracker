@@ -414,6 +414,141 @@ export const MARKERS = [
     lowConcern: 'Low zinc impairs thyroid hormone production and immune regulation.',
     optimalNote: null,
   },
+  {
+    id: 'magnesium_rbc',
+    name: 'Magnesium (RBC)',
+    fullName: 'Red Blood Cell Magnesium',
+    unit: 'mg/dL',
+    category: 'nutrients',
+    aliases: [
+      'magnesium rbc', 'magnesium, rbc', 'rbc magnesium', 'red blood cell magnesium',
+      'magnesium red blood cell', 'intracellular magnesium',
+      // Spanish / Portuguese
+      'magnesio eritrocitario', 'magnesio rbc',
+      // French
+      'magnésium érythrocytaire',
+      // German
+      'magnesium erythrozyten',
+      // Russian
+      'магний эритроциты',
+    ],
+    standard: { low: 4.2, high: 6.8 },
+    optimal: { low: 5.5, high: 6.8 },
+    priority: 3,
+    description: 'RBC magnesium measures magnesium inside your cells - a far more accurate picture than serum magnesium, which stays normal even when cells are depleted. Magnesium is a cofactor in over 300 enzymes including those that activate thyroid hormone.',
+    highConcern: null,
+    lowConcern: 'Low intracellular magnesium causes muscle cramps, poor sleep, anxiety, constipation, and fatigue - symptoms that overlap heavily with Hashimoto\'s. Magnesium is rapidly depleted by stress, and most people with autoimmune conditions run low.',
+    optimalNote: 'Supplement with magnesium glycinate (best tolerated, promotes sleep) or malate (good for fatigue). Avoid magnesium oxide - it has poor absorption. Retest RBC magnesium after 3 months of supplementation.',
+  },
+  {
+    id: 'iron_serum',
+    name: 'Iron (Serum)',
+    fullName: 'Serum Iron',
+    unit: 'mcg/dL',
+    category: 'nutrients',
+    aliases: [
+      'iron serum', 'serum iron', 'iron total', 'iron level', 'iron blood',
+      'iron total serum', 'fe serum',
+      // Spanish / Portuguese
+      'hierro sérico', 'hierro total', 'ferro sérico',
+      // French
+      'fer sérique', 'fer total',
+      // German
+      'serumeisen', 'eisen serum',
+      // Russian
+      'железо сыворотки', 'сывороточное железо',
+      // Japanese
+      '血清鉄',
+      // Chinese
+      '血清铁',
+      // Korean
+      '혈청철',
+    ],
+    standard: { low: 40, high: 170 },
+    optimal: { low: 85, high: 130 },
+    priority: 3,
+    description: 'The amount of iron circulating in your blood. Iron is essential for producing thyroid hormone and converting T4 to the active T3 - deficiency is one of the most common reasons Hashimoto\'s patients feel exhausted even on thyroid medication.',
+    highConcern: 'High serum iron alongside high ferritin may indicate iron overload (hemochromatosis) - worth discussing with your doctor.',
+    lowConcern: 'Low iron impairs T4-to-T3 conversion and slows the enzyme that makes thyroid hormone. This means your thyroid medication may not work as well as it should.',
+    optimalNote: 'Always interpret serum iron together with ferritin and iron saturation for the full picture. Iron is best absorbed away from thyroid medication - take supplements at least 4 hours apart.',
+  },
+  {
+    id: 'iron_saturation',
+    name: 'Iron Saturation',
+    fullName: 'Transferrin Saturation',
+    unit: '%',
+    category: 'nutrients',
+    aliases: [
+      'iron saturation', 'iron % saturation', 'transferrin saturation', 'percent saturation',
+      'iron binding saturation', 'tibc saturation', 'iron sat',
+      // Spanish
+      'saturación de transferrina', 'saturación de hierro',
+      // French
+      'saturation de la transferrine',
+      // German
+      'transferrinsättigung',
+      // Russian
+      'насыщение трансферрина',
+    ],
+    standard: { low: 15, high: 50 },
+    optimal: { low: 25, high: 35 },
+    priority: 3,
+    description: 'The percentage of iron-carrying proteins (transferrin) that are actually loaded with iron. It tells you how efficiently your body is supplying iron to your tissues - low saturation means your cells are iron-starved even if total iron looks okay.',
+    highConcern: 'Iron saturation above 45-50% can indicate iron overload. Worth checking ferritin and considering genetic testing for hemochromatosis.',
+    lowConcern: 'Low iron saturation means your iron transport system is running empty - your tissues aren\'t getting enough iron even to support the T4-to-T3 conversion that thyroid medication depends on.',
+    optimalNote: 'Aim for iron saturation between 25-35%. If low, look at your ferritin too - if both are low, you likely need iron supplementation.',
+  },
+  {
+    id: 'omega3',
+    name: 'Omega-3 Total',
+    fullName: 'Total Omega-3 Fatty Acids',
+    unit: '% by wt',
+    category: 'nutrients',
+    aliases: [
+      'omega-3 total', 'omega 3 total', 'omegacheck', 'omega-3 total omegacheck',
+      'omega 3 total omegacheck', 'total omega 3', 'total omega-3',
+      'omega-3 index', 'omega 3 index',
+    ],
+    standard: { low: 4.0, high: 100 },
+    optimal: { low: 8.0, high: 100 },
+    priority: 3,
+    description: 'The percentage of your red blood cell membranes made up of omega-3 fatty acids. Low omega-3 drives inflammation, worsens autoimmune activity, and impairs thyroid hormone signaling.',
+    highConcern: null,
+    lowConcern: 'Low omega-3 levels mean your cells are more inflamed and your immune system is more reactive - directly worsening Hashimoto\'s autoimmune activity and antibody levels.',
+    optimalNote: 'Target omega-3 above 8% by wt. The fastest way to raise it: 2-3g EPA+DHA daily from high-quality fish oil or algae oil. Retest in 4-6 months.',
+  },
+
+  {
+    id: 'homocysteine',
+    name: 'Homocysteine',
+    fullName: 'Homocysteine',
+    unit: 'umol/L',
+    category: 'inflammation',
+    aliases: [
+      'homocysteine', 'homocysteine serum', 'serum homocysteine', 'homocysteine plasma',
+      // Spanish / Portuguese
+      'homocisteína', 'homocisteina',
+      // French
+      'homocystéine',
+      // German
+      'homocystein',
+      // Russian
+      'гомоцистеин',
+      // Japanese
+      'ホモシステイン',
+      // Chinese
+      '同型半胱氨酸',
+      // Korean
+      '호모시스테인',
+    ],
+    standard: { low: 0, high: 15 },
+    optimal: { low: 0, high: 9 },
+    priority: 2,
+    description: 'An amino acid that rises when your methylation pathway is impaired. Elevated homocysteine drives vascular inflammation, impairs brain function, and is linked to higher risk of cardiovascular disease - all concerns for Hashimoto\'s patients.',
+    highConcern: 'Elevated homocysteine signals a methylation problem - your body isn\'t properly processing B vitamins (B12, B6, folate). This drives chronic inflammation, damages blood vessel walls, and worsens autoimmune activity. Many Hashimoto\'s patients have MTHFR gene variants that raise homocysteine.',
+    lowConcern: null,
+    optimalNote: 'Target homocysteine below 9 umol/L. Most effective interventions: methylfolate (5-MTHF), methylcobalamin (B12), and B6 - the methylated forms are critical if you have an MTHFR variant.',
+  },
 
   // ── General blood / CBC markers ──────────────────────────────────────────────
   {
@@ -454,7 +589,7 @@ export const MARKERS = [
     optimalNote: 'For Hashimoto\'s, aim for hemoglobin above 13.0 g/dL. If low, ask your doctor to also check ferritin (iron stores) and B12 - these are the most common causes.',
   },
 
-  // ── Cardiometabolic markers ───────────────────────────────────────────────────
+  // ── Cardiometabolic markers ──────────────────────────────────────────────────
   {
     id: 'cholesterol_total',
     name: 'Total Cholesterol',
@@ -462,25 +597,25 @@ export const MARKERS = [
     unit: 'mg/dL',
     category: 'cardiometabolic',
     aliases: [
-      'cholesterol total', 'total cholesterol', 'cholesterol', 'cholesterol serum', 'cholesterol blood',
+      'cholesterol total', 'total cholesterol', 'cholesterol serum', 'cholesterol blood',
       // Spanish / Portuguese
-      'colesterol total', 'colesterol',
+      'colesterol total', 'total de colesterol',
       // French
-      'cholestérol total', 'cholestérol',
+      'cholestérol total',
       // German
-      'gesamtcholesterin', 'cholesterin',
+      'gesamtcholesterin',
       // Russian
-      'общий холестерин', 'холестерин',
+      'общий холестерин',
       // Japanese
-      '総コレステロール', 'コレステロール',
+      '総コレステロール',
       // Chinese
-      '总胆固醇', '胆固醇',
+      '总胆固醇',
       // Korean
-      '총 콜레스테롤', '콜레스테롤',
+      '총 콜레스테롤',
       // Arabic
-      'الكوليسترول الكلي', 'كوليسترول',
+      'الكوليسترول الكلي',
       // Hindi
-      'कुल कोलेस्ट्रॉल', 'कोलेस्ट्रॉल',
+      'कुल कोलेस्ट्रॉल',
     ],
     standard: { low: 0, high: 200 },
     optimal: { low: 0, high: 180 },
@@ -598,14 +733,228 @@ export const MARKERS = [
     optimalNote: 'Optimal ALT is under 25 IU/L. If elevated, discuss with your doctor - it\'s worth checking whether optimizing your thyroid medication brings it down.',
   },
 
+  {
+    id: 'hdl',
+    name: 'HDL Cholesterol',
+    fullName: 'HDL Cholesterol',
+    unit: 'mg/dL',
+    category: 'cardiometabolic',
+    aliases: [
+      'hdl', 'hdl cholesterol', 'hdl-cholesterol', 'high density lipoprotein',
+      'hdl-c', 'hdl c', 'good cholesterol',
+      // Spanish / Portuguese
+      'colesterol hdl', 'hdl colesterol', 'lipoproteína de alta densidad',
+      // French
+      'cholestérol hdl', 'lipoprotéine haute densité',
+      // German
+      'hdl cholesterin', 'hdl-cholesterin',
+      // Russian
+      'хдл холестерин', 'холестерин hdl',
+      // Japanese
+      'hdlコレステロール', '善玉コレステロール',
+      // Chinese
+      '高密度脂蛋白胆固醇', 'hdl胆固醇',
+      // Korean
+      'hdl 콜레스테롤',
+    ],
+    standard: { low: 50, high: 999 },
+    optimal: { low: 65, high: 999 },
+    priority: 3,
+    description: 'The "good" cholesterol that carries fats away from arteries. Low HDL is a direct marker of insulin resistance and inflammation - both common in Hashimoto\'s. Thyroid hormone raises HDL, so undertreated hypothyroidism often lowers it.',
+    highConcern: null,
+    lowConcern: 'Low HDL is a sign your metabolism is under stress - often from insulin resistance, inflammation, or undertreated hypothyroidism. All three are common in Hashimoto\'s and can be addressed together.',
+    optimalNote: 'Raise HDL with omega-3 fish oil, regular aerobic exercise, cutting refined carbs, and optimizing thyroid levels. HDL responds slowly - give interventions 3-6 months.',
+  },
+  {
+    id: 'ldl',
+    name: 'LDL Cholesterol',
+    fullName: 'LDL Cholesterol',
+    unit: 'mg/dL',
+    category: 'cardiometabolic',
+    aliases: [
+      'ldl', 'ldl cholesterol', 'ldl-cholesterol', 'low density lipoprotein',
+      'ldl-c', 'ldl c', 'ldl cholesterol calc', 'ldl cholesterol calculated',
+      // Spanish / Portuguese
+      'colesterol ldl', 'ldl colesterol', 'lipoproteína de baja densidad',
+      // French
+      'cholestérol ldl', 'lipoprotéine basse densité',
+      // German
+      'ldl cholesterin', 'ldl-cholesterin',
+      // Russian
+      'лдл холестерин', 'холестерин ldl',
+      // Japanese
+      'ldlコレステロール', '悪玉コレステロール',
+      // Chinese
+      '低密度脂蛋白胆固醇', 'ldl胆固醇',
+      // Korean
+      'ldl 콜레스테롤',
+    ],
+    standard: { low: 0, high: 130 },
+    optimal: { low: 0, high: 100 },
+    priority: 3,
+    description: 'The main carrier of cholesterol in the blood. Thyroid hormone directly controls LDL clearance from your bloodstream - when thyroid levels drop, LDL rises. Elevated LDL alongside a high TSH often normalizes once thyroid medication is optimized.',
+    highConcern: 'Elevated LDL is often a thyroid problem before it\'s a cholesterol problem. Thyroid hormone controls the liver receptors that clear LDL - when the thyroid is underactive, LDL builds up. If your TSH is also above 2.5, ask your doctor about optimizing your dose before starting a statin.',
+    lowConcern: null,
+    optimalNote: 'For Hashimoto\'s patients, tracking LDL particle number (LDL-P) and ApoB gives a more accurate cardiovascular risk picture than total LDL alone.',
+  },
+  {
+    id: 'apob',
+    name: 'ApoB',
+    fullName: 'Apolipoprotein B',
+    unit: 'mg/dL',
+    category: 'cardiometabolic',
+    aliases: [
+      'apob', 'apolipoprotein b', 'apolipoprotein b 100', 'apo b', 'apo-b',
+      // Spanish / Portuguese
+      'apolipoproteína b',
+      // French
+      'apolipoprotéine b',
+      // German
+      'apolipoprotein b',
+      // Russian
+      'аполипопротеин б',
+    ],
+    standard: { low: 0, high: 130 },
+    optimal: { low: 0, high: 80 },
+    priority: 3,
+    description: 'Each LDL particle has exactly one ApoB molecule, so ApoB directly counts the number of cholesterol-carrying particles. It\'s a more accurate cardiovascular risk marker than total LDL - you can have normal LDL but high ApoB if your particles are small and numerous.',
+    highConcern: 'Elevated ApoB means you have more LDL particles in circulation - each one is a potential artery-clogger. Hypothyroidism raises ApoB directly, so optimizing thyroid levels is often the first step.',
+    lowConcern: null,
+    optimalNote: 'Target ApoB below 80 mg/dL for low cardiovascular risk. This is a more actionable target than total LDL for most people with metabolic concerns.',
+  },
+  {
+    id: 'uric_acid',
+    name: 'Uric Acid',
+    fullName: 'Uric Acid',
+    unit: 'mg/dL',
+    category: 'cardiometabolic',
+    aliases: [
+      'uric acid', 'uric acid serum', 'serum uric acid', 'urate', 'uricacid',
+      // Spanish / Portuguese
+      'ácido úrico', 'acido urico',
+      // French
+      'acide urique',
+      // German
+      'harnsäure',
+      // Russian
+      'мочевая кислота',
+      // Japanese
+      '尿酸',
+      // Chinese
+      '尿酸',
+      // Korean
+      '요산',
+    ],
+    standard: { low: 2.4, high: 6.0 },
+    optimal: { low: 2.5, high: 5.0 },
+    priority: 3,
+    description: 'A waste product from purine metabolism. High uric acid signals metabolic stress and is often elevated alongside insulin resistance and poor kidney clearance - both common in Hashimoto\'s. Very high levels cause gout.',
+    highConcern: 'High uric acid is a sign of metabolic strain - often from fructose excess, insulin resistance, or dehydration. It also drives inflammation independently. In Hashimoto\'s, insulin resistance is a common co-driver.',
+    lowConcern: null,
+    optimalNote: 'The best ways to lower uric acid: cut fructose and alcohol, stay well hydrated, and address insulin resistance. Tart cherry extract and vitamin C have modest evidence for reduction.',
+  },
+
   // ── PCOS-specific markers ────────────────────────────────────────────────────
+  {
+    id: 'prolactin',
+    name: 'Prolactin',
+    fullName: 'Prolactin',
+    unit: 'ng/mL',
+    category: 'hormones',
+    aliases: [
+      'prolactin', 'prolactin serum', 'serum prolactin', 'prl',
+      // Spanish / Portuguese
+      'prolactina',
+      // French
+      'prolactine',
+      // German
+      'prolaktin',
+      // Russian
+      'пролактин',
+      // Japanese
+      'プロラクチン',
+      // Chinese
+      '泌乳素', '催乳素',
+      // Korean
+      '프로락틴',
+    ],
+    standard: { low: 3, high: 30 },
+    optimal: { low: 3, high: 15 },
+    priority: 3,
+    description: 'A hormone made by your pituitary gland. Hypothyroidism directly raises prolactin - your pituitary overproduces TRH (the signal to make more thyroid hormone), which also stimulates prolactin. High prolactin can suppress ovulation and libido even when TSH looks managed.',
+    highConcern: 'Elevated prolactin is often a sign of undertreated hypothyroidism - the same pituitary signal that raises TSH also raises prolactin. It can cause irregular periods, low libido, and breast discharge. If prolactin stays high after optimizing thyroid medication, your doctor should rule out a pituitary adenoma.',
+    lowConcern: null,
+    optimalNote: 'Prolactin often normalizes on its own once thyroid levels are optimized. Retest after 3-6 months of consistent thyroid medication.',
+  },
+  {
+    id: 'leptin',
+    name: 'Leptin',
+    fullName: 'Leptin',
+    unit: 'ng/mL',
+    category: 'hormones',
+    aliases: [
+      'leptin', 'leptin serum', 'serum leptin',
+      // Spanish / Portuguese
+      'leptina',
+      // French
+      'leptine',
+      // German
+      'leptin',
+      // Russian
+      'лептин',
+      // Japanese
+      'レプチン',
+      // Chinese
+      '瘦素',
+      // Korean
+      '렙틴',
+    ],
+    standard: { low: 3, high: 25 },
+    optimal: { low: 4, high: 15 },
+    priority: 3,
+    description: 'The "fullness hormone" made by fat cells. When leptin resistance develops (similar to insulin resistance), your brain can\'t hear the signal to stop eating or speed up metabolism. Leptin resistance is extremely common in Hashimoto\'s and drives weight gain that doesn\'t respond to diet alone.',
+    highConcern: 'High leptin suggests leptin resistance - your brain is ignoring the fullness signal despite high levels. This makes weight loss very difficult and worsens Hashimoto\'s inflammation. Thyroid hormone is needed for leptin signaling to work properly, creating a vicious cycle when TSH is high.',
+    lowConcern: 'Very low leptin (often from very low calorie dieting) suppresses thyroid hormone production - your body slows metabolism to conserve energy. This is why crash diets worsen Hashimoto\'s symptoms.',
+    optimalNote: 'Leptin levels are closely tied to body fat percentage and can\'t be directly supplemented. The most effective strategies: optimize thyroid medication, sleep 7-9 hours (sleep deprivation raises leptin resistance), avoid fasting extremes, and reduce inflammation.',
+  },
+  {
+    id: 'testosterone_total',
+    name: 'Testosterone (Total)',
+    fullName: 'Total Testosterone',
+    unit: 'ng/dL',
+    category: 'hormones',
+    aliases: [
+      'testosterone total', 'testosterone, total', 'total testosterone',
+      'testosterone', 'testosterone serum',
+      // Spanish / Portuguese
+      'testosterona total', 'testosterona',
+      // French
+      'testostérone totale', 'testostérone',
+      // German
+      'gesamt-testosteron', 'testosteron',
+      // Russian
+      'тестостерон общий', 'общий тестостерон',
+      // Japanese
+      'テストステロン', '総テストステロン',
+      // Chinese
+      '总睾酮', '睾酮',
+      // Korean
+      '총 테스토스테론', '테스토스테론',
+    ],
+    standard: { low: 8, high: 60 },
+    optimal: { low: 15, high: 50 },
+    priority: 3,
+    description: 'Total circulating testosterone. In women with Hashimoto\'s, testosterone can be elevated (from PCOS or adrenal stress) or depleted (from chronic illness and low DHEA-S). Both extremes affect energy, mood, and muscle mass.',
+    highConcern: 'High total testosterone in women suggests either PCOS (ovarian source) or adrenal overactivity (DHEA-S elevation). It can cause acne, excess hair, irregular periods, and worsened insulin resistance.',
+    lowConcern: 'Low testosterone in women causes fatigue, low libido, poor muscle tone, and low motivation - symptoms that overlap heavily with hypothyroidism. Chronic illness, low DHEA-S, and high sex hormone binding globulin (SHBG) all lower testosterone.',
+    optimalNote: 'Total testosterone should always be read alongside SHBG and free testosterone - low SHBG can mean more active testosterone even when total looks normal.',
+  },
   {
     id: 'fasting_insulin',
     name: 'Fasting Insulin',
     fullName: 'Fasting Serum Insulin',
     unit: 'uIU/mL',
     category: 'hormones',
-    perspectiveOnly: ['pcos'],
     aliases: ['insulin fasting', 'fasting insulin', 'insulin serum', 'insulin'],
     standard: { low: 2, high: 25 },
     optimal: { low: 2, high: 8 },
@@ -621,7 +970,6 @@ export const MARKERS = [
     fullName: 'Free Testosterone',
     unit: 'pg/mL',
     category: 'hormones',
-    perspectiveOnly: ['pcos'],
     aliases: ['free testosterone', 'testosterone free', 'testosterone, free', 'testosterone free and weakly bound'],
     standard: { low: 0.1, high: 6.4 },
     optimal: { low: 0.1, high: 2.2 },
@@ -637,8 +985,7 @@ export const MARKERS = [
     fullName: 'Dehydroepiandrosterone Sulfate',
     unit: 'ug/dL',
     category: 'hormones',
-    perspectiveOnly: ['pcos', 'menopause', 'postmenopause'],
-    aliases: ['dhea-s', 'dheas', 'dhea sulfate', 'dehydroepiandrosterone sulfate', 'dhea s', 'dhea-sulfate'],
+    aliases: ['dhea-s', 'dheas', 'dhea sulfate', 'dehydroepiandrosterone sulfate', 'dhea s', 'dhea-sulfate', 'dhea sulfate mcg'],
     standard: { low: 35, high: 430 },
     optimal: { low: 65, high: 275 },
     priority: 3,
@@ -653,7 +1000,6 @@ export const MARKERS = [
     fullName: 'Sex Hormone Binding Globulin',
     unit: 'nmol/L',
     category: 'hormones',
-    perspectiveOnly: ['pcos', 'menopause', 'postmenopause'],
     aliases: ['shbg', 'sex hormone binding globulin', 'sex hormone-binding globulin', 'sex horm binding glob'],
     standard: { low: 18, high: 114 },
     optimal: { low: 60, high: 114 },
@@ -669,7 +1015,6 @@ export const MARKERS = [
     fullName: 'Hemoglobin A1c (3-Month Blood Sugar Average)',
     unit: '%',
     category: 'hormones',
-    perspectiveOnly: ['pcos'],
     aliases: ['hemoglobin a1c', 'hba1c', 'hb a1c', 'a1c', 'glycated hemoglobin', 'glycohemoglobin'],
     standard: { low: 4.0, high: 5.7 },
     optimal: { low: 4.0, high: 5.2 },
@@ -767,7 +1112,6 @@ export const MARKERS = [
     fullName: 'Morning Serum Cortisol',
     unit: 'mcg/dL',
     category: 'hormones',
-    perspectiveOnly: ['menopause', 'postmenopause'],
     aliases: [
       'cortisol', 'cortisol am', 'morning cortisol', 'cortisol serum', 'cortisol, serum',
       'cortisol total', 'cortisol blood',
