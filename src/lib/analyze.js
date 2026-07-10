@@ -875,7 +875,7 @@ export function generateTopActions(results, perspective) {
     });
   } else if (hasHighAb) {
     candidates.push({
-      weight: 87,
+      weight: 91,
       label: 'Change Your Diet',
       title: 'Cut out gluten completely for 3 months',
       detail: 'Going fully gluten-free is the single best-studied diet change for lowering TPO antibodies. Commit to strict elimination - even small amounts can keep inflammation going - and retest at 3 months.',
