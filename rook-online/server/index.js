@@ -153,6 +153,19 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('setTeamName', ({ code, team, name }, cb) => {
+    try {
+      const room = getRoomOrThrow(code);
+      const meta = socketMeta.get(socket.id);
+      const seat = room.findSeatByPlayerId(meta.playerId);
+      room.setTeamName(seat, team, name);
+      cb({ ok: true });
+      broadcast(room);
+    } catch (err) {
+      cb({ ok: false, error: err.message });
+    }
+  });
+
   socket.on('playCard', ({ code, card }, cb) => {
     try {
       const room = getRoomOrThrow(code);

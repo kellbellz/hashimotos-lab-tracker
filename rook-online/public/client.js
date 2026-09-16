@@ -23,6 +23,7 @@ let uiTab = 'create';
 let selectedDiscards = [];
 let selectedTrump = null;
 let bidDraft = null;
+let editingTeam = null; // 'A' | 'B' | null
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -347,10 +348,68 @@ function renderTopbar() {
   }
   const score = document.createElement('div');
   score.className = 'scoreboard';
-  score.innerHTML = `<span class="team-a">Team A (seats 1&amp;3): ${state.scores.A}</span>
-    <span class="team-b">Team B (seats 2&amp;4): ${state.scores.B}</span>`;
+  score.appendChild(renderTeamScoreChip('A'));
+  score.appendChild(renderTeamScoreChip('B'));
   bar.append(left, score);
   return bar;
+}
+
+function teamOfSeat(seat) {
+  return seat % 2 === 0 ? 'A' : 'B';
+}
+
+function teamLabel(team) {
+  return (state.teamNames && state.teamNames[team]) || `Team ${team}`;
+}
+
+function renderTeamScoreChip(team) {
+  const wrap = document.createElement('span');
+  wrap.className = 'team-' + team.toLowerCase();
+  wrap.style.display = 'inline-flex';
+  wrap.style.alignItems = 'center';
+  wrap.style.gap = '6px';
+  const isYourTeam = state.yourSeat !== null && state.yourSeat !== undefined && teamOfSeat(state.yourSeat) === team;
+
+  if (editingTeam === team) {
+    const input = document.createElement('input');
+    input.value = teamLabel(team);
+    input.maxLength = 30;
+    input.style.width = '150px';
+    let saved = false;
+    const save = () => {
+      if (saved) return;
+      saved = true;
+      const val = input.value.trim();
+      editingTeam = null;
+      if (val && val !== teamLabel(team)) {
+        call('setTeamName', { code: state.code, team, name: val });
+      } else {
+        render();
+      }
+    };
+    input.onkeydown = (e) => {
+      if (e.key === 'Enter') save();
+      if (e.key === 'Escape') { saved = true; editingTeam = null; render(); }
+    };
+    input.onblur = save;
+    wrap.appendChild(input);
+    setTimeout(() => { input.focus(); input.select(); }, 0);
+  } else {
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = `${teamLabel(team)}: ${state.scores[team]}`;
+    wrap.appendChild(nameSpan);
+    if (isYourTeam) {
+      const editBtn = document.createElement('button');
+      editBtn.className = 'secondary';
+      editBtn.textContent = '✎';
+      editBtn.title = 'Rename your team';
+      editBtn.style.padding = '2px 8px';
+      editBtn.style.fontSize = '12px';
+      editBtn.onclick = () => { editingTeam = team; render(); };
+      wrap.appendChild(editBtn);
+    }
+  }
+  return wrap;
 }
 
 function renderTable() {
@@ -585,11 +644,11 @@ function renderHandOver() {
   const box = document.createElement('div');
   box.className = 'summary-box';
   box.innerHTML = `
-    <div><b>${seatLabel(s.bidder)}</b> (Team ${s.bidderTeam}) bid <b>${s.bidAmount}</b>, trump was <b>${s.trump.toUpperCase()}</b>.</div>
-    <div>Team A captured <b>${s.teamPoints.A}</b> pts &middot; Team B captured <b>${s.teamPoints.B}</b> pts.</div>
-    <div>Discard pile (nest) was worth ${s.nestPoints} pts - ${s.nestAwardedTo ? `added to Team ${s.nestAwardedTo}'s total (won the final trick)` : "not added to either team's point total (Newman rules)"}.</div>
-    <div>Team ${s.bidderTeam} <b>${s.madeBid ? 'made' : 'was SET on'}</b> the bid.</div>
-    <div style="margin-top:8px;">New scores &mdash; Team A: <b>${s.scoresAfter.A}</b> &middot; Team B: <b>${s.scoresAfter.B}</b></div>
+    <div><b>${seatLabel(s.bidder)}</b> (${teamLabel(s.bidderTeam)}) bid <b>${s.bidAmount}</b>, trump was <b>${s.trump.toUpperCase()}</b>.</div>
+    <div>${teamLabel('A')} captured <b>${s.teamPoints.A}</b> pts &middot; ${teamLabel('B')} captured <b>${s.teamPoints.B}</b> pts.</div>
+    <div>Discard pile (nest) was worth ${s.nestPoints} pts - ${s.nestAwardedTo ? `added to ${teamLabel(s.nestAwardedTo)}'s total (won the final trick)` : "not added to either team's point total (Newman rules)"}.</div>
+    <div>${teamLabel(s.bidderTeam)} <b>${s.madeBid ? 'made' : 'was SET on'}</b> the bid.</div>
+    <div style="margin-top:8px;">New scores &mdash; ${teamLabel('A')}: <b>${s.scoresAfter.A}</b> &middot; ${teamLabel('B')}: <b>${s.scoresAfter.B}</b></div>
   `;
   wrap.appendChild(box);
 
@@ -614,8 +673,8 @@ function renderGameOver() {
   const wrap = document.createElement('div');
   wrap.className = 'center-msg';
   const win = state.winnerTeam;
-  wrap.innerHTML = `<h2>${win ? `Team ${win} wins!` : "It's a tie!"}</h2>
-    <div>Final score &mdash; Team A: ${state.scores.A} &middot; Team B: ${state.scores.B}</div>`;
+  wrap.innerHTML = `<h2>${win ? `${teamLabel(win)} wins!` : "It's a tie!"}</h2>
+    <div>Final score &mdash; ${teamLabel('A')}: ${state.scores.A} &middot; ${teamLabel('B')}: ${state.scores.B}</div>`;
   const btn = document.createElement('button');
   btn.textContent = 'Back to Home';
   btn.onclick = () => {

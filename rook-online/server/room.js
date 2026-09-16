@@ -31,6 +31,7 @@ class Room {
     this.handNumber = 0;
     this.log = [];
     this.onBotMove = null; // set by server to schedule timers
+    this.teamNames = { A: null, B: null }; // null = derive from player names
   }
 
   addLog(msg) {
@@ -40,6 +41,24 @@ class Room {
 
   findSeatByPlayerId(playerId) {
     return this.players.findIndex((p) => p && p.playerId === playerId);
+  }
+
+  defaultTeamName(team) {
+    const seats = team === 'A' ? [0, 2] : [1, 3];
+    return seats.map((s) => (this.players[s] ? this.players[s].name : `Seat ${s + 1}`)).join(' & ');
+  }
+
+  getTeamName(team) {
+    return this.teamNames[team] || this.defaultTeamName(team);
+  }
+
+  setTeamName(seat, team, name) {
+    if (team !== 'A' && team !== 'B') throw new Error('Invalid team');
+    if (teamOf(seat) !== team) throw new Error('You can only rename your own team');
+    const trimmed = String(name || '').trim().slice(0, 30);
+    if (!trimmed) throw new Error('Team name cannot be empty');
+    this.teamNames[team] = trimmed;
+    this.addLog(`${this.players[seat].name} renamed their team to "${trimmed}".`);
   }
 
   addPlayer(playerId, name, socketId) {
@@ -383,6 +402,7 @@ class Room {
       phase: this.phase,
       dealerSeat: this.dealerSeat,
       scores: this.scores,
+      teamNames: { A: this.getTeamName('A'), B: this.getTeamName('B') },
       handNumber: this.handNumber,
       log: this.log.slice(-30),
     };
