@@ -79,6 +79,19 @@ function parseCard(card) {
   return { color: m[1], number: parseInt(m[2], 10) };
 }
 
+const ROOK_BIRD_SVG = `<svg viewBox="0 0 200 200" width="1em" height="1em" style="display:block">
+  <ellipse cx="108" cy="112" rx="46" ry="36" fill="currentColor" />
+  <circle cx="57" cy="72" r="25" fill="currentColor" />
+  <polygon points="33,68 6,76 33,90" fill="currentColor" />
+  <polygon points="138,88 202,52 148,106" fill="currentColor" />
+  <polygon points="140,128 196,148 150,114" fill="currentColor" />
+  <line x1="92" y1="146" x2="86" y2="180" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+  <line x1="120" y1="148" x2="126" y2="180" stroke="currentColor" stroke-width="7" stroke-linecap="round" />
+  <line x1="78" y1="182" x2="94" y2="182" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
+  <line x1="118" y1="182" x2="134" y2="182" stroke="currentColor" stroke-width="6" stroke-linecap="round" />
+  <circle cx="62" cy="65" r="4.5" fill="#2b2145" />
+</svg>`;
+
 function cardNode(card, opts = {}) {
   const { small, selectable, disabled, chosen, faceDown } = opts;
   const div = document.createElement('div');
@@ -90,7 +103,7 @@ function cardNode(card, opts = {}) {
   const info = parseCard(card);
   if (info.rook) {
     div.classList.add('card-rook');
-    div.innerHTML = '<div class="num">&#9820;</div><div class="label">Rook</div>';
+    div.innerHTML = `<div class="num">${ROOK_BIRD_SVG}</div><div class="label">Rook</div>`;
   } else {
     div.classList.add('card-' + info.color);
     div.innerHTML = `<div class="num">${info.number}</div><div class="label">${info.color}</div>`;
@@ -591,10 +604,29 @@ function renderNest() {
   }
   wrap.appendChild(handRow);
 
+  const need = 5 - selectedDiscards.length;
+  const statusLine = document.createElement('div');
+  statusLine.className = 'action-hint';
+  statusLine.style.marginBottom = '4px';
+  if (need > 0) {
+    statusLine.textContent = `Step 1: select ${need} more card${need === 1 ? '' : 's'} to discard (${selectedDiscards.length}/5 chosen).`;
+  } else if (!selectedTrump) {
+    statusLine.textContent = `Step 2: 5 cards selected - now choose a trump color below.`;
+  } else {
+    statusLine.textContent = `Ready - discarding 5 cards, trump is ${selectedTrump.toUpperCase()}. Click Confirm.`;
+  }
+  wrap.appendChild(statusLine);
+
   const row = document.createElement('div');
   row.className = 'action-row';
-  row.innerHTML = `<span class="action-hint">Discarding: ${selectedDiscards.length}/5</span>`;
 
+  const pickerWrap = document.createElement('div');
+  pickerWrap.style.display = 'flex';
+  pickerWrap.style.flexDirection = 'column';
+  pickerWrap.style.gap = '4px';
+  const pickerLabel = document.createElement('span');
+  pickerLabel.className = 'action-hint';
+  pickerLabel.textContent = 'Trump color:';
   const picker = document.createElement('div');
   picker.className = 'color-picker';
   for (const color of ['red', 'yellow', 'green', 'black']) {
@@ -604,11 +636,15 @@ function renderNest() {
     sw.onclick = () => { selectedTrump = color; render(); };
     picker.appendChild(sw);
   }
-  row.appendChild(picker);
+  pickerWrap.append(pickerLabel, picker);
+  row.appendChild(pickerWrap);
 
   const confirmBtn = document.createElement('button');
   confirmBtn.textContent = 'Confirm';
   confirmBtn.disabled = selectedDiscards.length !== 5 || !selectedTrump;
+  confirmBtn.title = confirmBtn.disabled
+    ? (need > 0 ? `Select ${need} more card(s) first` : 'Choose a trump color first')
+    : '';
   confirmBtn.onclick = () => call('resolveNest', { code: state.code, discards: selectedDiscards, trump: selectedTrump });
   row.appendChild(confirmBtn);
 
