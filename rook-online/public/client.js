@@ -280,6 +280,25 @@ function seatLabel(seat) {
   return p ? p.name + (seat === state.yourSeat ? ' (you)' : '') : 'Empty';
 }
 
+// A plain (non-interactive) view of your hand, shown during phases where the
+// action bar doesn't already render it (e.g. renderHandRow during play,
+// renderNest's discard picker for the bidder).
+function renderMyHandStrip() {
+  const wrap = document.createElement('div');
+  const label = document.createElement('div');
+  label.className = 'action-hint';
+  label.style.padding = '0 18px';
+  label.textContent = 'Your hand:';
+  wrap.appendChild(label);
+  const handRow = document.createElement('div');
+  handRow.className = 'hand-row';
+  for (const card of state.yourHand || []) {
+    handRow.appendChild(cardNode(card, {}));
+  }
+  wrap.appendChild(handRow);
+  return wrap;
+}
+
 function renderGame() {
   const wrap = document.createElement('div');
   wrap.id = 'game-screen';
@@ -292,6 +311,10 @@ function renderGame() {
   const tableCol = document.createElement('div');
   tableCol.className = 'table-col';
   tableCol.appendChild(renderTable());
+  const showPlainHand =
+    state.yourHand &&
+    (state.phase === 'bidding' || (state.phase === 'nest' && state.bidder !== state.yourSeat));
+  if (showPlainHand) tableCol.appendChild(renderMyHandStrip());
   tableCol.appendChild(renderActionBar());
   main.appendChild(tableCol);
 
