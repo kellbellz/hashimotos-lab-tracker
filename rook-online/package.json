@@ -4,6 +4,9 @@
   "private": true,
   "description": "Play Rook online with 3 other people, with configurable Newman house rules.",
   "main": "server/index.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js"

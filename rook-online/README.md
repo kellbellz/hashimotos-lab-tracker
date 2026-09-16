@@ -23,12 +23,23 @@ survive restarts/deploys you'd need to add persistence, which isn't included.
 
 ## Deploying so remote friends can join
 
-This needs a long-running Node process with WebSocket support (Socket.IO
-falls back to polling, but a real server is best) - static hosts like GitHub
-Pages won't work. Any small Node host works well: Render, Railway, Fly.io,
-a Fly/DigitalOcean VM, etc. Point its start command at `npm start` inside
-`rook-online/`, and make sure it doesn't sleep mid-game (or accept that a
-sleeping free-tier dyno will need a moment to wake on the first request).
+This needs a long-running Node process with WebSocket support - static
+hosts like GitHub Pages won't work. The repo includes a Render Blueprint
+(`render.yaml` at the repo root) for a one-click deploy:
+
+1. Click **[Deploy to Render](https://render.com/deploy?repo=https://github.com/kellbellz/hashimotos-lab-tracker)**.
+2. Sign in / create a free Render account if you don't have one, review the
+   detected `rook-online` web service, and click **Apply**.
+3. Wait for the build to finish (a minute or two), then open the URL Render
+   gives the service and share it with your 3 friends.
+
+Render's free tier spins the service down after ~15 minutes of no traffic,
+so the first person to open the link after a quiet spell will see a
+30-60 second cold start before the page loads - normal, not broken.
+
+Any other small Node host works too (Railway, Fly.io, a VM): point its
+start command at `npm start` inside `rook-online/` and make sure `PORT` is
+respected (it already is, via `process.env.PORT`).
 
 ## Rules implemented
 
