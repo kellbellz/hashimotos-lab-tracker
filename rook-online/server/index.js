@@ -93,6 +93,18 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('switchSeat', ({ code, targetSeat }, cb) => {
+    try {
+      const room = getRoomOrThrow(code);
+      const meta = socketMeta.get(socket.id);
+      room.switchSeat(meta.playerId, targetSeat);
+      cb({ ok: true });
+      broadcast(room);
+    } catch (err) {
+      cb({ ok: false, error: err.message });
+    }
+  });
+
   socket.on('addBot', ({ code, seat }, cb) => {
     try {
       const room = getRoomOrThrow(code);

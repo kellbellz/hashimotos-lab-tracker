@@ -307,29 +307,29 @@ function renderLobby() {
     <p style="text-align:center;color:var(--muted);margin-top:-10px;">Share this code so 3 friends can join &middot;
     Rules: <b>${state.rulesetName === 'newman' ? 'Newman' : 'Standard'}</b> &middot; Playing to ${state.targetScore}</p>`;
 
-  const grid = document.createElement('div');
-  grid.className = 'seat-row';
   const isHost = state.hostSeat === state.yourSeat;
-  for (let seat = 0; seat < 4; seat++) {
-    const p = state.players[seat];
-    const slot = document.createElement('div');
-    slot.className = 'seat-slot' + (p ? ' filled' : '');
-    if (p) {
-      slot.innerHTML = `<div class="seat-name">${p.name}${seat === state.yourSeat ? ' (you)' : ''}</div>
-        <div class="seat-tag">${p.isHost ? 'Host' : ''} ${p.isBot ? 'CPU' : p.connected ? '' : '(offline)'}</div>`;
-    } else {
-      slot.innerHTML = `<div class="seat-tag" style="margin-bottom:8px;">Empty seat</div>`;
-      if (isHost) {
-        const btn = document.createElement('button');
-        btn.className = 'secondary';
-        btn.textContent = 'Add CPU';
-        btn.onclick = () => call('addBot', { code: state.code, seat });
-        slot.appendChild(btn);
-      }
+  const teamCols = document.createElement('div');
+  teamCols.className = 'team-columns';
+  for (const team of ['A', 'B']) {
+    const col = document.createElement('div');
+    col.className = 'team-column';
+    const heading = document.createElement('h3');
+    heading.textContent = teamLabel(team);
+    col.appendChild(heading);
+    const seats = team === 'A' ? [0, 2] : [1, 3];
+    for (const seat of seats) {
+      col.appendChild(renderLobbySeatSlot(seat, isHost));
     }
-    grid.appendChild(slot);
+    teamCols.appendChild(col);
   }
-  card.appendChild(grid);
+  card.appendChild(teamCols);
+
+  const hint = document.createElement('p');
+  hint.style.textAlign = 'center';
+  hint.style.color = 'var(--muted)';
+  hint.style.fontSize = '13px';
+  hint.textContent = 'Click "Switch here" on any other seat to change your team.';
+  card.appendChild(hint);
 
   if (isHost) {
     const full = state.players.every((p) => p);
@@ -349,6 +349,36 @@ function renderLobby() {
 
   wrap.appendChild(card);
   return wrap;
+}
+
+function renderLobbySeatSlot(seat, isHost) {
+  const p = state.players[seat];
+  const slot = document.createElement('div');
+  slot.className = 'seat-slot' + (p ? ' filled' : '');
+  if (p) {
+    slot.innerHTML = `<div class="seat-name">${p.name}${seat === state.yourSeat ? ' (you)' : ''}</div>
+      <div class="seat-tag">${p.isHost ? 'Host' : ''} ${p.isBot ? 'CPU' : p.connected ? '' : '(offline)'}</div>`;
+  } else {
+    slot.innerHTML = `<div class="seat-tag" style="margin-bottom:8px;">Empty seat</div>`;
+  }
+
+  if (seat !== state.yourSeat) {
+    const btn = document.createElement('button');
+    btn.className = 'secondary';
+    btn.textContent = p ? 'Switch here' : 'Move here';
+    btn.onclick = () => call('switchSeat', { code: state.code, targetSeat: seat });
+    slot.appendChild(btn);
+  }
+
+  if (!p && isHost) {
+    const botBtn = document.createElement('button');
+    botBtn.className = 'secondary';
+    botBtn.textContent = 'Add CPU';
+    botBtn.onclick = () => call('addBot', { code: state.code, seat });
+    slot.appendChild(botBtn);
+  }
+
+  return slot;
 }
 
 // ---------------------------------------------------------------------

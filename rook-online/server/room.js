@@ -101,6 +101,28 @@ class Room {
     return this.players.every((p) => p !== null);
   }
 
+  switchSeat(playerId, targetSeat) {
+    if (this.phase !== 'lobby') throw new Error('Seats can only be changed before the game starts');
+    if (targetSeat < 0 || targetSeat > 3) throw new Error('Invalid seat');
+    const fromSeat = this.findSeatByPlayerId(playerId);
+    if (fromSeat === -1) throw new Error('You are not seated in this room');
+    if (fromSeat === targetSeat) return;
+
+    const mover = this.players[fromSeat];
+    const other = this.players[targetSeat];
+    this.players[targetSeat] = mover;
+    this.players[fromSeat] = other;
+
+    if (this.hostSeat === fromSeat) this.hostSeat = targetSeat;
+    else if (this.hostSeat === targetSeat) this.hostSeat = fromSeat;
+
+    this.addLog(
+      other
+        ? `${mover.name} swapped seats with ${other.name}.`
+        : `${mover.name} moved to seat ${targetSeat + 1}.`
+    );
+  }
+
   // ---------------------------------------------------------------------
   // Hand lifecycle
   // ---------------------------------------------------------------------
