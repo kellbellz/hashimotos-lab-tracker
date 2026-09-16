@@ -24,6 +24,7 @@ let selectedDiscards = [];
 let selectedTrump = null;
 let bidDraft = null;
 let editingTeam = null; // 'A' | 'B' | null
+let showLastTrick = false;
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -129,6 +130,71 @@ function render() {
     return;
   }
   app.appendChild(renderGame());
+  const modal = renderLastTrickModal();
+  if (modal) app.appendChild(modal);
+}
+
+function renderLastTrickModal() {
+  if (!showLastTrick || !state.lastCompletedTrick) return null;
+
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.inset = '0';
+  overlay.style.background = 'rgba(0,0,0,0.6)';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.style.zIndex = '500';
+  overlay.onclick = (e) => { if (e.target === overlay) { showLastTrick = false; render(); } };
+
+  const box = document.createElement('div');
+  box.className = 'summary-box';
+  box.style.background = '#16213a';
+  box.style.padding = '24px';
+  box.style.minWidth = '300px';
+  box.style.textAlign = 'center';
+
+  const title = document.createElement('h3');
+  title.style.margin = '0 0 16px';
+  title.textContent = 'Last Trick';
+  box.appendChild(title);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.gap = '14px';
+  row.style.justifyContent = 'center';
+  row.style.marginBottom = '16px';
+  for (let rel = 0; rel < 4; rel++) {
+    const seat = (state.yourSeat + rel) % 4;
+    const played = state.lastCompletedTrick.cards.find((tc) => tc.seat === seat);
+    if (!played) continue;
+    const col = document.createElement('div');
+    col.style.display = 'flex';
+    col.style.flexDirection = 'column';
+    col.style.alignItems = 'center';
+    col.style.gap = '6px';
+    col.appendChild(cardNode(played.card, {}));
+    const lbl = document.createElement('div');
+    lbl.style.fontSize = '12px';
+    lbl.style.color = 'var(--muted)';
+    lbl.textContent = seatLabel(seat) + (seat === state.lastCompletedTrick.winnerSeat ? ' \u{1F3C6}' : '');
+    col.appendChild(lbl);
+    row.appendChild(col);
+  }
+  box.appendChild(row);
+
+  const winnerLine = document.createElement('div');
+  winnerLine.innerHTML = `Won by <b>${seatLabel(state.lastCompletedTrick.winnerSeat)}</b>`;
+  box.appendChild(winnerLine);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = 'Close';
+  closeBtn.style.marginTop = '16px';
+  closeBtn.onclick = () => { showLastTrick = false; render(); };
+  box.appendChild(closeBtn);
+
+  overlay.appendChild(box);
+  return overlay;
 }
 
 // ---------------------------------------------------------------------
@@ -437,7 +503,8 @@ function renderTable() {
     const isTurn =
       (state.phase === 'bidding' && state.bidding && state.bidding.turnSeat === seat) ||
       (state.phase === 'nest' && state.bidder === seat) ||
-      (state.phase === 'playing' && state.turnSeat === seat);
+      (state.phase === 'playing' && state.pendingTrickWinner !== null && state.pendingTrickWinner === seat) ||
+      (state.phase === 'playing' && state.pendingTrickWinner === null && state.turnSeat === seat);
     if (isTurn) pos.classList.add('turn');
     const name = document.createElement('div');
     name.className = 'name';
@@ -478,6 +545,15 @@ function renderTable() {
       center.appendChild(slotWrap);
     }
   }
+  if (state.phase === 'playing' && state.pendingTrickWinner !== null) {
+    center.classList.add('trick-complete');
+    const isYourClear = state.pendingTrickWinner === state.yourSeat;
+    if (isYourClear) {
+      center.classList.add('clearable');
+      center.title = 'Tap to clear the trick';
+      center.onclick = () => call('clearTrick', { code: state.code });
+    }
+  }
   table.appendChild(center);
 
   return table;
@@ -486,7 +562,20 @@ function renderTable() {
 function renderSidePanel() {
   const panel = document.createElement('div');
   panel.className = 'side-panel';
-  panel.innerHTML = '<h3>Activity</h3>';
+
+  if (state.lastCompletedTrick) {
+    const lastTrickBtn = document.createElement('button');
+    lastTrickBtn.className = 'secondary';
+    lastTrickBtn.textContent = 'View Last Trick';
+    lastTrickBtn.style.width = '100%';
+    lastTrickBtn.style.marginBottom = '14px';
+    lastTrickBtn.onclick = () => { showLastTrick = true; render(); };
+    panel.appendChild(lastTrickBtn);
+  }
+
+  const heading = document.createElement('h3');
+  heading.textContent = 'Activity';
+  panel.appendChild(heading);
   const log = state.log.slice().reverse();
   for (const entry of log) {
     const line = document.createElement('div');
@@ -626,7 +715,7 @@ function renderNest() {
   pickerWrap.style.gap = '4px';
   const pickerLabel = document.createElement('span');
   pickerLabel.className = 'action-hint';
-  pickerLabel.textContent = 'Trump color:';
+  pickerLabel.textContent = 'Choose a Trump';
   const picker = document.createElement('div');
   picker.className = 'color-picker';
   for (const color of ['red', 'yellow', 'green', 'black']) {
@@ -654,11 +743,19 @@ function renderNest() {
 
 function renderHandRow() {
   const wrap = document.createElement('div');
-  const isYourTurn = state.turnSeat === state.yourSeat;
+  const clearing = state.pendingTrickWinner !== null;
+  const isYourTurn = !clearing && state.turnSeat === state.yourSeat;
   const hint = document.createElement('div');
   hint.className = 'action-hint';
   hint.style.marginBottom = '6px';
-  hint.textContent = isYourTurn ? 'Your turn - play a card.' : `Waiting for ${seatLabel(state.turnSeat)}...`;
+  if (clearing) {
+    hint.textContent =
+      state.pendingTrickWinner === state.yourSeat
+        ? 'You won the trick - tap the cards in the middle of the table to continue.'
+        : `Waiting for ${seatLabel(state.pendingTrickWinner)} to clear the trick...`;
+  } else {
+    hint.textContent = isYourTurn ? 'Your turn - play a card.' : `Waiting for ${seatLabel(state.turnSeat)}...`;
+  }
   wrap.appendChild(hint);
 
   const handRow = document.createElement('div');

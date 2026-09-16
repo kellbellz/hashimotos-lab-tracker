@@ -126,6 +126,8 @@ class Room {
     this.tricksPlayed = 0;
     this.tricksWonBy = { A: [], B: [] };
     this.trick = { leaderSeat: null, cards: [] };
+    this.pendingTrickWinner = null;
+    this.lastCompletedTrick = null;
     this.phase = 'bidding';
     this.bidding = {
       turnSeat: (this.dealerSeat + 1) % 4,
@@ -245,13 +247,27 @@ class Room {
       return;
     }
 
+    // All 4 cards are in - figure out the winner but leave the cards showing
+    // on the table until that player taps to clear it (clearTrick below).
     const winnerSeat = trickWinnerSeat(this.trick.cards, this.trump, this.ruleset);
+    this.pendingTrickWinner = winnerSeat;
+    this.lastCompletedTrick = { cards: this.trick.cards.slice(), winnerSeat };
+    this.turnSeat = null;
+    this.addLog(`${this.players[winnerSeat].name} wins the trick.`);
+    this.maybeScheduleBot();
+  }
+
+  clearTrick(seat) {
+    if (this.phase !== 'playing') throw new Error('Not in playing phase');
+    if (this.pendingTrickWinner === null) throw new Error('No completed trick waiting to be cleared');
+    if (seat !== this.pendingTrickWinner) throw new Error('Only the trick winner can clear the table');
+
+    const winnerSeat = this.pendingTrickWinner;
     const team = teamOf(winnerSeat);
     this.tricksWonBy[team].push(this.trick.cards.map((tc) => tc.card));
     this.lastTrickWinnerSeat = winnerSeat;
     this.tricksPlayed += 1;
-    this.addLog(`${this.players[winnerSeat].name} wins the trick.`);
-
+    this.pendingTrickWinner = null;
     this.trick = { leaderSeat: winnerSeat, cards: [] };
     this.turnSeat = winnerSeat;
 
@@ -319,15 +335,23 @@ class Room {
   maybeScheduleBot() {
     if (!this.onBotMove) return;
     let actingSeat = null;
+    let clearing = false;
     if (this.phase === 'bidding') actingSeat = this.bidding.turnSeat;
     else if (this.phase === 'nest') actingSeat = this.bidder;
-    else if (this.phase === 'playing') actingSeat = this.turnSeat;
+    else if (this.phase === 'playing' && this.pendingTrickWinner !== null) {
+      actingSeat = this.pendingTrickWinner;
+      clearing = true;
+    } else if (this.phase === 'playing') actingSeat = this.turnSeat;
     if (actingSeat === null) return;
     const player = this.players[actingSeat];
     if (!player || !player.isBot) return;
     setTimeout(() => {
       try {
-        this.performBotMove(actingSeat);
+        if (clearing) {
+          this.clearTrick(actingSeat);
+        } else {
+          this.performBotMove(actingSeat);
+        }
       } catch (err) {
         // Bot mistakes should never crash the room; log and move on.
         this.addLog(`(bot error: ${err.message})`);
@@ -433,10 +457,13 @@ class Room {
     if (this.phase === 'playing' || this.phase === 'handOver') {
       base.trick = this.trick;
       base.turnSeat = this.turnSeat;
-      if (viewerSeat === this.turnSeat && this.phase === 'playing') {
+      base.pendingTrickWinner = this.pendingTrickWinner;
+      if (viewerSeat === this.turnSeat && this.phase === 'playing' && this.pendingTrickWinner === null) {
         base.legalPlays = legalPlays(this.hands[viewerSeat], this.trick.cards, this.trump, this.ruleset);
       }
     }
+
+    base.lastCompletedTrick = this.lastCompletedTrick;
 
     if (this.phase === 'handOver' || this.phase === 'gameOver') {
       base.lastHandSummary = this.lastHandSummary;
