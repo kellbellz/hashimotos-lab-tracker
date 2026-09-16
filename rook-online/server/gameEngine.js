@@ -85,7 +85,6 @@ function pointValue(card, ruleset) {
   const n = numberOf(card);
   if (n === 14 || n === 10) return 10;
   if (n === 5) return 5;
-  if (n === 1) return 15;
   return 0;
 }
 

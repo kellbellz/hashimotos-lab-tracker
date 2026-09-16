@@ -58,7 +58,7 @@ handwritten rules sheet:
 | Rook card play | ranks as the **lowest** trump card and must follow normal follow-suit rules like any other trump | ranks as the **highest** trump card and may be played at any time, even if you could follow suit |
 
 Everything else (bidding in increments of 5, a player forced to bid if
-everyone else passes before anyone bids, point cards 1=15/5=5/10=10/14=10,
+everyone else passes before anyone bids, point cards 5=5/10=10/14=10 (1's carry no points),
 dealer rotating each hand, teams scoring what they capture while the bidding
 team scores their bid negatively if they don't make it, playing to 300
 points) follows standard Rook.
