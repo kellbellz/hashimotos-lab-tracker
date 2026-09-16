@@ -25,6 +25,10 @@ let selectedTrump = null;
 let bidDraft = null;
 let editingTeam = null; // 'A' | 'B' | null
 let showLastTrick = false;
+let bidTimerSeat = null;
+let bidTimerHandle = null;
+let showBidTaunt = false;
+const BID_TAUNT_DELAY_MS = 15000;
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -67,8 +71,26 @@ socket.on('state', (view) => {
     selectedDiscards = [];
     selectedTrump = null;
   }
+  updateBidTimer();
   render();
 });
+
+// Purely cosmetic, client-side only: if the same player is on the clock for
+// too long during bidding, taunt them in the middle of the table.
+function updateBidTimer() {
+  const turnSeat = state.phase === 'bidding' && state.bidding ? state.bidding.turnSeat : null;
+  if (turnSeat === bidTimerSeat) return;
+  bidTimerSeat = turnSeat;
+  showBidTaunt = false;
+  if (bidTimerHandle) clearTimeout(bidTimerHandle);
+  bidTimerHandle = null;
+  if (turnSeat !== null) {
+    bidTimerHandle = setTimeout(() => {
+      showBidTaunt = true;
+      render();
+    }, BID_TAUNT_DELAY_MS);
+  }
+}
 
 // ---------------------------------------------------------------------
 // Card helpers
@@ -587,6 +609,12 @@ function renderTable() {
         <div class="bid-center-amount">&mdash;</div>
         <div class="bid-center-by">No bids yet</div>`;
     }
+    if (showBidTaunt) {
+      const taunt = document.createElement('div');
+      taunt.className = 'bid-taunt';
+      taunt.textContent = 'Even a monkey can make 85...';
+      bidPanel.appendChild(taunt);
+    }
     table.appendChild(bidPanel);
     return table;
   }
@@ -896,8 +924,8 @@ function renderHandOver() {
 
   wrap.appendChild(box);
 
-  const isHost = state.hostSeat === state.yourSeat;
-  if (isHost) {
+  const isDealer = state.dealerSeat === state.yourSeat;
+  if (isDealer) {
     const btn = document.createElement('button');
     btn.style.marginTop = '12px';
     btn.textContent = 'Deal Next Hand';
@@ -907,7 +935,7 @@ function renderHandOver() {
     const p = document.createElement('div');
     p.className = 'action-hint';
     p.style.marginTop = '12px';
-    p.textContent = 'Waiting for host to deal the next hand...';
+    p.textContent = `Waiting for ${seatLabel(state.dealerSeat)} (the dealer) to deal the next hand...`;
     wrap.appendChild(p);
   }
   return wrap;

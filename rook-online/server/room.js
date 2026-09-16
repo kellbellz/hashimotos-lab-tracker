@@ -348,6 +348,7 @@ class Room {
       this.addLog(this.winnerTeam ? `Team ${this.winnerTeam} wins the game!` : 'Game ends in a tie.');
     } else {
       this.dealerSeat = (this.dealerSeat + 1) % 4;
+      this.maybeScheduleBot();
     }
   }
 
@@ -358,29 +359,31 @@ class Room {
   maybeScheduleBot() {
     if (!this.onBotMove) return;
     let actingSeat = null;
-    let clearing = false;
+    let action = 'move';
     if (this.phase === 'bidding') actingSeat = this.bidding.turnSeat;
     else if (this.phase === 'nest') actingSeat = this.bidder;
     else if (this.phase === 'playing' && this.pendingTrickWinner !== null) {
       actingSeat = this.pendingTrickWinner;
-      clearing = true;
+      action = 'clear';
     } else if (this.phase === 'playing') actingSeat = this.turnSeat;
+    else if (this.phase === 'handOver') {
+      actingSeat = this.dealerSeat;
+      action = 'deal';
+    }
     if (actingSeat === null) return;
     const player = this.players[actingSeat];
     if (!player || !player.isBot) return;
     setTimeout(() => {
       try {
-        if (clearing) {
-          this.clearTrick(actingSeat);
-        } else {
-          this.performBotMove(actingSeat);
-        }
+        if (action === 'clear') this.clearTrick(actingSeat);
+        else if (action === 'deal') this.startHand();
+        else this.performBotMove(actingSeat);
       } catch (err) {
         // Bot mistakes should never crash the room; log and move on.
         this.addLog(`(bot error: ${err.message})`);
       }
       if (this.onBotMove) this.onBotMove();
-    }, BOT_DELAY_MS);
+    }, action === 'deal' ? BOT_DELAY_MS * 2 : BOT_DELAY_MS);
   }
 
   performBotMove(seat) {
