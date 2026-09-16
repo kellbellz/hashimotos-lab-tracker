@@ -404,6 +404,18 @@ class Room {
     }
   }
 
+  // Points captured in completed tricks so far this hand (excludes the
+  // buried nest, which isn't awarded until the hand ends).
+  currentHandPoints() {
+    const points = { A: 0, B: 0 };
+    for (const team of ['A', 'B']) {
+      for (const trick of this.tricksWonBy[team]) {
+        for (const card of trick) points[team] += pointValue(card, this.ruleset);
+      }
+    }
+    return points;
+  }
+
   // ---------------------------------------------------------------------
   // View building - hides other players' hands.
   // ---------------------------------------------------------------------
@@ -437,6 +449,7 @@ class Room {
     base.bidder = this.bidder;
     base.bidAmount = this.bidAmount;
     base.trump = this.trump;
+    base.currentHandPoints = this.currentHandPoints();
 
     if (this.phase === 'bidding') {
       base.bidding = {

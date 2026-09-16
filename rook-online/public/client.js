@@ -495,6 +495,14 @@ function renderTable() {
   const table = document.createElement('div');
   table.className = 'table';
 
+  if (state.currentHandPoints) {
+    const pointsBar = document.createElement('div');
+    pointsBar.className = 'hand-points-bar';
+    pointsBar.innerHTML = `<span><span class="label">This hand</span>${teamLabel('A')}: ${state.currentHandPoints.A}</span>
+      <span>${teamLabel('B')}: ${state.currentHandPoints.B}</span>`;
+    table.appendChild(pointsBar);
+  }
+
   const positions = ['bot', 'left', 'top', 'right'];
   for (let rel = 0; rel < 4; rel++) {
     const seat = (state.yourSeat + rel) % 4;
