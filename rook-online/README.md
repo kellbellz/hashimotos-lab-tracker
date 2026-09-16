@@ -43,7 +43,7 @@ handwritten rules sheet:
 | Minimum bid | 5 | 70 |
 | Rook card point value | 25 | 20 |
 | First trick | led by the winning bidder | led by the player to the dealer's left |
-| Kitty/nest points | buried with the discards - not scored by anyone | added to whoever wins the final trick |
+| Points in discard pile (aka nest) | not added to either team's point total | added to the final-trick winner |
 | Rook card play | ranks as the **lowest** trump card and must follow normal follow-suit rules like any other trump | ranks as the **highest** trump card and may be played at any time, even if you could follow suit |
 
 Everything else (bidding in increments of 5, a player forced to bid if

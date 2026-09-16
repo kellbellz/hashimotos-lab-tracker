@@ -158,8 +158,8 @@ function renderHome() {
     note.className = 'rule-note';
     const updateNote = () => {
       note.innerHTML = select.value === 'newman'
-        ? 'Min bid 5 &middot; Rook card worth 25 pts &middot; bid winner leads first trick &middot; kitty is buried (not scored) &middot; Rook plays as the lowest trump, following normal suit rules.'
-        : 'Min bid 70 &middot; Rook card worth 20 pts &middot; player left of dealer leads first trick &middot; kitty goes to winner of the final trick &middot; Rook is the highest trump and may be played anytime.';
+        ? 'Min bid 5 &middot; Rook card worth 25 pts &middot; bid winner leads first trick &middot; points in the discard pile (nest) are not added to either team\'s point total &middot; Rook plays as the lowest trump, following normal suit rules.'
+        : 'Min bid 70 &middot; Rook card worth 20 pts &middot; player left of dealer leads first trick &middot; points in the discard pile (nest) are added to the final-trick winner &middot; Rook is the highest trump and may be played anytime.';
     };
     select.onchange = updateNote;
     updateNote();
@@ -564,7 +564,7 @@ function renderHandOver() {
   box.innerHTML = `
     <div><b>${seatLabel(s.bidder)}</b> (Team ${s.bidderTeam}) bid <b>${s.bidAmount}</b>, trump was <b>${s.trump.toUpperCase()}</b>.</div>
     <div>Team A captured <b>${s.teamPoints.A}</b> pts &middot; Team B captured <b>${s.teamPoints.B}</b> pts.</div>
-    <div>Kitty was worth ${s.nestPoints} pts - ${s.nestAwardedTo ? `awarded to Team ${s.nestAwardedTo} (won last trick)` : 'buried, not scored (Newman rules)'}.</div>
+    <div>Discard pile (nest) was worth ${s.nestPoints} pts - ${s.nestAwardedTo ? `added to Team ${s.nestAwardedTo}'s total (won the final trick)` : "not added to either team's point total (Newman rules)"}.</div>
     <div>Team ${s.bidderTeam} <b>${s.madeBid ? 'made' : 'was SET on'}</b> the bid.</div>
     <div style="margin-top:8px;">New scores &mdash; Team A: <b>${s.scoresAfter.A}</b> &middot; Team B: <b>${s.scoresAfter.B}</b></div>
   `;

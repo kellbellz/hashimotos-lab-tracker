@@ -20,7 +20,7 @@ const RULESETS = {
     minBid: 70,
     bidIncrement: 5,
     rookPoints: 20,
-    // Kitty/nest points go to whichever team wins the final trick.
+    // Points in the discard pile (nest) are added to the final-trick winner.
     nestPointsToFinalTrickWinner: true,
     // Player to the dealer's left leads the first trick.
     firstLeader: 'leftOfDealer',
@@ -35,7 +35,7 @@ const RULESETS = {
     minBid: 5,
     bidIncrement: 5,
     rookPoints: 25,
-    // Discarded nest cards are simply removed from play - nobody scores them.
+    // Points in the discard pile (nest) are not added to either team's point total.
     nestPointsToFinalTrickWinner: false,
     // The winning bidder leads the first trick.
     firstLeader: 'bidder',
