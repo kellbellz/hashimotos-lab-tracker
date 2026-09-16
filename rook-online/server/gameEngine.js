@@ -32,10 +32,7 @@ const RULESETS = {
   // Read off the left-hand ("NEWMAN") column of the notes.
   newman: {
     name: 'newman',
-    // The handwritten note reads "5_" with the second digit unclear; 50 is
-    // the closest plausible reading and is called out in the README as an
-    // assumption to confirm/adjust.
-    minBid: 50,
+    minBid: 5,
     bidIncrement: 5,
     rookPoints: 25,
     // Discarded nest cards are simply removed from play - nobody scores them.

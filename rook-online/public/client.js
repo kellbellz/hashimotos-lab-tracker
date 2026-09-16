@@ -158,7 +158,7 @@ function renderHome() {
     note.className = 'rule-note';
     const updateNote = () => {
       note.innerHTML = select.value === 'newman'
-        ? 'Min bid 50 &middot; Rook card worth 25 pts &middot; bid winner leads first trick &middot; kitty is buried (not scored) &middot; Rook plays as the lowest trump, following normal suit rules.'
+        ? 'Min bid 5 &middot; Rook card worth 25 pts &middot; bid winner leads first trick &middot; kitty is buried (not scored) &middot; Rook plays as the lowest trump, following normal suit rules.'
         : 'Min bid 70 &middot; Rook card worth 20 pts &middot; player left of dealer leads first trick &middot; kitty goes to winner of the final trick &middot; Rook is the highest trump and may be played anytime.';
     };
     select.onchange = updateNote;

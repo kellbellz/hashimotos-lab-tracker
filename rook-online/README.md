@@ -40,7 +40,7 @@ handwritten rules sheet:
 
 | | Newman | Standard |
 |---|---|---|
-| Minimum bid | 50 | 70 |
+| Minimum bid | 5 | 70 |
 | Rook card point value | 25 | 20 |
 | First trick | led by the winning bidder | led by the player to the dealer's left |
 | Kitty/nest points | buried with the discards - not scored by anyone | added to whoever wins the final trick |
@@ -52,16 +52,12 @@ dealer rotating each hand, teams scoring what they capture while the bidding
 team scores their bid negatively if they don't make it, playing to 300
 points) follows standard Rook.
 
-### Assumption worth double-checking
+### Assumptions worth double-checking
 
-The minimum-bid digit in the Newman column of the notes was hard to read
-(looked like "5" plus a partly crossed-out digit) - it's implemented as
-**50**. If the real number is different, it's one line to change in
-`server/gameEngine.js` (`RULESETS.newman.minBid`). The 4-color deck ranking
-(14 high down to 1 low within a color) and the 300-point target score were
-not specified in the notes and are the common Rook defaults - both are also
-easy to change in `gameEngine.js` (`RULESETS` / `Room.targetScore`) if your
-group plays differently.
+The 4-color deck ranking (14 high down to 1 low within a color) and the
+300-point target score were not specified in the notes and are the common
+Rook defaults - both are easy to change in `gameEngine.js` (`RULESETS` /
+`Room.targetScore`) if your group plays differently.
 
 ## Project layout
 
