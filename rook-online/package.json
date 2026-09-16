@@ -1,0 +1,15 @@
+{
+  "name": "rook-online",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Play Rook online with 3 other people, with configurable Newman house rules.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
