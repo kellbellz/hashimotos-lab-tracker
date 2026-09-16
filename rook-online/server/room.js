@@ -138,6 +138,17 @@ class Room {
     );
   }
 
+  endGame(seat) {
+    if (seat !== this.hostSeat) throw new Error('Only the host can end the game');
+    if (this.phase === 'lobby' || this.phase === 'gameOver') throw new Error('No game in progress to end');
+    this.phase = 'gameOver';
+    this.winnerTeam = this.scores.A === this.scores.B ? null : this.scores.A > this.scores.B ? 'A' : 'B';
+    this.addLog(
+      `${this.players[seat].name} (host) ended the game early. ` +
+        `${this.winnerTeam ? `Team ${this.winnerTeam} wins` : 'Game ends in a tie'} - scores A: ${this.scores.A}, B: ${this.scores.B}.`
+    );
+  }
+
   // ---------------------------------------------------------------------
   // Hand lifecycle
   // ---------------------------------------------------------------------

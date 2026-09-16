@@ -705,6 +705,20 @@ function renderSidePanel() {
   const panel = document.createElement('div');
   panel.className = 'side-panel';
 
+  if (state.hostSeat === state.yourSeat && state.phase !== 'gameOver') {
+    const endBtn = document.createElement('button');
+    endBtn.className = 'danger';
+    endBtn.textContent = 'End Game';
+    endBtn.style.width = '100%';
+    endBtn.style.marginBottom = '14px';
+    endBtn.onclick = () => {
+      if (window.confirm('End the game now for everyone? Final scores will be locked in. This cannot be undone.')) {
+        call('endGame', { code: state.code });
+      }
+    };
+    panel.appendChild(endBtn);
+  }
+
   if (state.lastCompletedTrick) {
     const lastTrickBtn = document.createElement('button');
     lastTrickBtn.className = 'secondary';

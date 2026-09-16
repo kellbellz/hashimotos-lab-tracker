@@ -127,6 +127,19 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('endGame', ({ code }, cb) => {
+    try {
+      const room = getRoomOrThrow(code);
+      const meta = socketMeta.get(socket.id);
+      const seat = room.findSeatByPlayerId(meta.playerId);
+      room.endGame(seat);
+      cb({ ok: true });
+      broadcast(room);
+    } catch (err) {
+      cb({ ok: false, error: err.message });
+    }
+  });
+
   socket.on('dealNextHand', ({ code }, cb) => {
     try {
       const room = getRoomOrThrow(code);
