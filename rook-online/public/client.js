@@ -534,6 +534,23 @@ function renderTable() {
     table.appendChild(pos);
   }
 
+  if (state.phase === 'bidding' && state.bidding) {
+    const b = state.bidding;
+    const bidPanel = document.createElement('div');
+    bidPanel.className = 'bid-center-panel';
+    if (b.highBid > 0) {
+      bidPanel.innerHTML = `<div class="bid-center-label">High Bid</div>
+        <div class="bid-center-amount">${b.highBid}</div>
+        <div class="bid-center-by">${seatLabel(b.highBidderSeat)}</div>`;
+    } else {
+      bidPanel.innerHTML = `<div class="bid-center-label">Bidding</div>
+        <div class="bid-center-amount">&mdash;</div>
+        <div class="bid-center-by">No bids yet</div>`;
+    }
+    table.appendChild(bidPanel);
+    return table;
+  }
+
   const center = document.createElement('div');
   center.className = 'trick-center';
   if (state.trick) {
