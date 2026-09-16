@@ -334,6 +334,7 @@ class Room {
       nestPoints,
       nestAwardedTo,
       madeBid,
+      discardedCards: this.nestDiscards.slice(),
       scoresAfter: { ...this.scores },
     };
     this.addLog(

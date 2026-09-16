@@ -840,14 +840,60 @@ function renderHandOver() {
   const wrap = document.createElement('div');
   const s = state.lastHandSummary;
   const box = document.createElement('div');
-  box.className = 'summary-box';
-  box.innerHTML = `
-    <div><b>${seatLabel(s.bidder)}</b> (${teamLabel(s.bidderTeam)}) bid <b>${s.bidAmount}</b>, trump was <b>${s.trump.toUpperCase()}</b>.</div>
-    <div>${teamLabel('A')} captured <b>${s.teamPoints.A}</b> pts &middot; ${teamLabel('B')} captured <b>${s.teamPoints.B}</b> pts.</div>
-    <div>Discard pile (nest) was worth ${s.nestPoints} pts - ${s.nestAwardedTo ? `added to ${teamLabel(s.nestAwardedTo)}'s total (won the final trick)` : "not added to either team's point total (Newman rules)"}.</div>
-    <div>${teamLabel(s.bidderTeam)} <b>${s.madeBid ? 'made' : 'was SET on'}</b> the bid.</div>
-    <div style="margin-top:8px;">New scores &mdash; ${teamLabel('A')}: <b>${s.scoresAfter.A}</b> &middot; ${teamLabel('B')}: <b>${s.scoresAfter.B}</b></div>
+  box.className = 'summary-box hand-result';
+
+  const bidLine = document.createElement('div');
+  bidLine.innerHTML = `<b>${seatLabel(s.bidder)}</b> (${teamLabel(s.bidderTeam)}) bid <b>${s.bidAmount}</b>, trump was <b>${s.trump.toUpperCase()}</b>.`;
+  box.appendChild(bidLine);
+
+  const buriedHeading = document.createElement('div');
+  buriedHeading.className = 'buried-heading';
+  buriedHeading.textContent = 'The kitty held...';
+  box.appendChild(buriedHeading);
+
+  const buriedRow = document.createElement('div');
+  buriedRow.className = 'hand-row reveal-row';
+  s.discardedCards.forEach((card, i) => {
+    const node = cardNode(card, { small: true });
+    node.classList.add('reveal-card');
+    node.style.animationDelay = `${0.15 + i * 0.18}s`;
+    buriedRow.appendChild(node);
+  });
+  box.appendChild(buriedRow);
+
+  const cardRevealTotal = 0.15 + s.discardedCards.length * 0.18 + 0.45;
+
+  const pointsLine = document.createElement('div');
+  pointsLine.style.marginTop = '4px';
+  pointsLine.innerHTML = `${teamLabel('A')} captured <b>${s.teamPoints.A}</b> pts &middot; ${teamLabel('B')} captured <b>${s.teamPoints.B}</b> pts.
+    <br>Discard pile (nest) was worth ${s.nestPoints} pts - ${s.nestAwardedTo ? `added to ${teamLabel(s.nestAwardedTo)}'s total (won the final trick)` : "not added to either team's point total (Newman rules)"}.`;
+  pointsLine.style.opacity = '0';
+  pointsLine.style.animation = 'fadeSlideUp 0.5s ease forwards';
+  pointsLine.style.animationDelay = `${cardRevealTotal}s`;
+  box.appendChild(pointsLine);
+
+  const outcomeBanner = document.createElement('div');
+  outcomeBanner.style.opacity = '0';
+  outcomeBanner.style.animation = 'fadeSlideUp 0.5s ease forwards';
+  outcomeBanner.style.animationDelay = `${cardRevealTotal + 0.3}s`;
+  if (s.madeBid) {
+    outcomeBanner.className = 'outcome-banner outcome-made';
+    outcomeBanner.innerHTML = `&#127881; ${teamLabel(s.bidderTeam)} MADE THE BID!`;
+  } else {
+    outcomeBanner.className = 'outcome-banner outcome-set';
+    outcomeBanner.innerHTML = `SET! &#127961;<div class="cripple-creek">"Goin' down a Cripple Creek a one by one..."</div>`;
+  }
+  box.appendChild(outcomeBanner);
+
+  const scoresSection = document.createElement('div');
+  scoresSection.className = 'final-scores';
+  scoresSection.style.animationDelay = `${cardRevealTotal + 0.7}s`;
+  scoresSection.innerHTML = `
+    <div class="final-score-row"><span>${teamLabel('A')}</span><b>${s.scoresAfter.A}</b></div>
+    <div class="final-score-row"><span>${teamLabel('B')}</span><b>${s.scoresAfter.B}</b></div>
   `;
+  box.appendChild(scoresSection);
+
   wrap.appendChild(box);
 
   const isHost = state.hostSeat === state.yourSeat;
