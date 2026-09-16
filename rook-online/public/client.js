@@ -708,7 +708,7 @@ function renderNest() {
 
   const hint = document.createElement('div');
   hint.className = 'action-hint';
-  hint.textContent = `You won the bid at ${state.bidAmount}. Pick 5 cards to bury and choose trump.`;
+  hint.textContent = `You won the bid at ${state.bidAmount}. Pick 5 cards to discard and choose trump.`;
   wrap.appendChild(hint);
 
   const handRow = document.createElement('div');
