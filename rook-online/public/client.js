@@ -29,6 +29,9 @@ let bidTimerSeat = null;
 let bidTimerHandle = null;
 let showBidTaunt = false;
 const BID_TAUNT_DELAY_MS = 15000;
+let handOverSeen = false; // has this client already displayed the current handOver?
+let dealUnlockAt = null; // Date.now() timestamp after which Deal Next Hand may be clicked
+const HAND_OVER_MIN_DISPLAY_MS = 5500;
 
 function showToast(msg) {
   toastEl.textContent = msg;
@@ -72,8 +75,23 @@ socket.on('state', (view) => {
     selectedTrump = null;
   }
   updateBidTimer();
+  updateHandOverTimer();
   render();
 });
+
+// Keeps the end-of-hand result on screen (and Deal Next Hand disabled) for
+// at least HAND_OVER_MIN_DISPLAY_MS after entering the handOver phase.
+function updateHandOverTimer() {
+  if (state.phase !== 'handOver') {
+    handOverSeen = false;
+    dealUnlockAt = null;
+    return;
+  }
+  if (handOverSeen) return;
+  handOverSeen = true;
+  dealUnlockAt = Date.now() + HAND_OVER_MIN_DISPLAY_MS;
+  setTimeout(render, HAND_OVER_MIN_DISPLAY_MS + 50);
+}
 
 // Purely cosmetic, client-side only: if the same player is on the clock for
 // too long during bidding, taunt them in the middle of the table.
@@ -116,9 +134,9 @@ const ROOK_BIRD_SVG = `<svg viewBox="0 0 200 200" width="1em" height="1em" style
 </svg>`;
 
 function cardNode(card, opts = {}) {
-  const { small, selectable, disabled, chosen, faceDown } = opts;
+  const { small, mini, selectable, disabled, chosen, faceDown } = opts;
   const div = document.createElement('div');
-  div.className = 'card' + (small ? ' small' : '');
+  div.className = 'card' + (small ? ' small' : '') + (mini ? ' mini' : '');
   if (faceDown) {
     div.classList.add('face-down');
     return div;
@@ -436,6 +454,7 @@ function renderGame() {
   wrap.id = 'game-screen';
 
   wrap.appendChild(renderTopbar());
+  if (state.currentHandPoints) wrap.appendChild(renderHandPointsStrip());
 
   const main = document.createElement('div');
   main.className = 'main-area';
@@ -543,17 +562,18 @@ function renderTeamScoreChip(team) {
   return wrap;
 }
 
+function renderHandPointsStrip() {
+  const strip = document.createElement('div');
+  strip.className = 'hand-points-strip';
+  strip.innerHTML = `<span><span class="label">This hand</span>${teamLabel('A')}: ${state.currentHandPoints.A}</span>
+    <span>${teamLabel('B')}: ${state.currentHandPoints.B}</span>`;
+  return strip;
+}
+
 function renderTable() {
   const table = document.createElement('div');
   table.className = 'table';
-
-  if (state.currentHandPoints) {
-    const pointsBar = document.createElement('div');
-    pointsBar.className = 'hand-points-bar';
-    pointsBar.innerHTML = `<span><span class="label">This hand</span>${teamLabel('A')}: ${state.currentHandPoints.A}</span>
-      <span>${teamLabel('B')}: ${state.currentHandPoints.B}</span>`;
-    table.appendChild(pointsBar);
-  }
+  if (state.trump) table.classList.add('trump-' + state.trump);
 
   const positions = ['bot', 'left', 'top', 'right'];
   for (let rel = 0; rel < 4; rel++) {
@@ -593,7 +613,36 @@ function renderTable() {
       badge.textContent = 'DEALER';
       pos.appendChild(badge);
     }
+    if (state.capturedPointCards) {
+      const dealerTeam = teamOfSeat(state.dealerSeat);
+      const nonDealerAnchorSeat = (state.dealerSeat + 1) % 4;
+      let cardsToShow = null;
+      if (seat === state.dealerSeat) cardsToShow = state.capturedPointCards[dealerTeam];
+      else if (seat === nonDealerAnchorSeat) cardsToShow = state.capturedPointCards[dealerTeam === 'A' ? 'B' : 'A'];
+      if (cardsToShow && cardsToShow.length > 0) {
+        const won = document.createElement('div');
+        won.className = 'points-won-row';
+        for (const card of cardsToShow) won.appendChild(cardNode(card, { mini: true }));
+        pos.appendChild(won);
+      }
+    }
     table.appendChild(pos);
+  }
+
+  if (state.phase === 'handOver' && state.lastHandSummary) {
+    const s = state.lastHandSummary;
+    const resultPanel = document.createElement('div');
+    resultPanel.className = 'hand-result-center ' + (s.madeBid ? 'made' : 'set');
+    resultPanel.innerHTML = `
+      <div class="hrc-label">Hand ${state.handNumber} Complete</div>
+      <div class="hrc-outcome">${s.madeBid ? 'BID MADE' : 'SET'}</div>
+      <div class="hrc-scores">
+        <div>${teamLabel('A')}: <b>${s.scoresAfter.A}</b></div>
+        <div>${teamLabel('B')}: <b>${s.scoresAfter.B}</b></div>
+      </div>
+    `;
+    table.appendChild(resultPanel);
+    return table;
   }
 
   if (state.phase === 'bidding' && state.bidding) {
@@ -924,18 +973,32 @@ function renderHandOver() {
 
   wrap.appendChild(box);
 
-  const isDealer = state.dealerSeat === state.yourSeat;
+  const dealSeat = state.dealButtonSeat !== undefined ? state.dealButtonSeat : state.dealerSeat;
+  const isDealer = dealSeat === state.yourSeat;
+  const locked = dealUnlockAt !== null && Date.now() < dealUnlockAt;
   if (isDealer) {
     const btn = document.createElement('button');
     btn.style.marginTop = '12px';
-    btn.textContent = 'Deal Next Hand';
+    const remaining = locked ? Math.ceil((dealUnlockAt - Date.now()) / 1000) : 0;
+    btn.textContent = locked ? `Deal Next Hand (${remaining}s)` : 'Deal Next Hand';
+    btn.disabled = locked;
     btn.onclick = () => call('dealNextHand', { code: state.code });
     wrap.appendChild(btn);
+    if (dealSeat !== state.dealerSeat) {
+      const note = document.createElement('div');
+      note.className = 'action-hint';
+      note.style.marginTop = '6px';
+      note.textContent = `${seatLabel(state.dealerSeat)} is the dealer (a bot) - you're dealing on their behalf.`;
+      wrap.appendChild(note);
+    }
   } else {
     const p = document.createElement('div');
     p.className = 'action-hint';
     p.style.marginTop = '12px';
-    p.textContent = `Waiting for ${seatLabel(state.dealerSeat)} (the dealer) to deal the next hand...`;
+    p.textContent =
+      dealSeat === state.dealerSeat
+        ? `Waiting for ${seatLabel(state.dealerSeat)} (the dealer) to deal the next hand...`
+        : `Waiting for ${seatLabel(dealSeat)} to deal on behalf of ${seatLabel(state.dealerSeat)} (the dealer)...`;
     wrap.appendChild(p);
   }
   return wrap;

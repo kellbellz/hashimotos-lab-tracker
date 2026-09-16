@@ -13,6 +13,8 @@ const {
 } = require('./gameEngine');
 
 const BOT_DELAY_MS = 900;
+const HAND_OVER_MIN_DISPLAY_MS = 5500; // keep the end-of-hand result up for at least 5s
+const BOT_TEAM_MIN_BID = 75; // if both partners are bots, one of them must reach this
 
 function randomChoice(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
@@ -99,6 +101,19 @@ class Room {
 
   isFull() {
     return this.players.every((p) => p !== null);
+  }
+
+  // The dealer keeps their status even when they're a bot, but a live
+  // (human) player takes the "deal" action on their behalf - the next
+  // connected human in rotation order. Falls back to the dealer's own seat
+  // if every seat is a bot (nobody to delegate to).
+  getDealButtonSeat() {
+    if (this.players[this.dealerSeat] && !this.players[this.dealerSeat].isBot) return this.dealerSeat;
+    for (let i = 1; i <= 4; i++) {
+      const s = (this.dealerSeat + i) % 4;
+      if (this.players[s] && !this.players[s].isBot) return s;
+    }
+    return this.dealerSeat;
   }
 
   switchSeat(playerId, targetSeat) {
@@ -367,7 +382,9 @@ class Room {
       action = 'clear';
     } else if (this.phase === 'playing') actingSeat = this.turnSeat;
     else if (this.phase === 'handOver') {
-      actingSeat = this.dealerSeat;
+      // Only auto-deal if there's truly no live player to hand the button
+      // to (e.g. an all-bot room) - otherwise a human takes the deal action.
+      actingSeat = this.getDealButtonSeat();
       action = 'deal';
     }
     if (actingSeat === null) return;
@@ -383,7 +400,7 @@ class Room {
         this.addLog(`(bot error: ${err.message})`);
       }
       if (this.onBotMove) this.onBotMove();
-    }, action === 'deal' ? BOT_DELAY_MS * 2 : BOT_DELAY_MS);
+    }, action === 'deal' ? HAND_OVER_MIN_DISPLAY_MS : BOT_DELAY_MS);
   }
 
   performBotMove(seat) {
@@ -391,8 +408,18 @@ class Room {
       const b = this.bidding;
       const remaining = b.activeSeats.filter((s) => s !== seat);
       const forced = remaining.length === 1 && b.highBid === 0;
+      const partnerSeat = (seat + 2) % 4;
+      const partnerIsBot = this.players[partnerSeat] && this.players[partnerSeat].isBot;
+      const teamHasHitFloor = partnerIsBot
+        ? b.history.some((h) => (h.seat === seat || h.seat === partnerSeat) && h.bid >= BOT_TEAM_MIN_BID)
+        : true;
       if (forced) {
         this.placeBid(seat, { amount: this.ruleset.minBid });
+      } else if (!teamHasHitFloor) {
+        // Two bots on the same team shouldn't just fold under a token bid -
+        // one of them pushes to at least BOT_TEAM_MIN_BID first.
+        const amount = Math.max(BOT_TEAM_MIN_BID, b.highBid + this.ruleset.bidIncrement, this.ruleset.minBid);
+        this.placeBid(seat, { amount });
       } else {
         this.placeBid(seat, { pass: true });
       }
@@ -442,6 +469,21 @@ class Room {
     return points;
   }
 
+  // The actual point-value cards (5s, 10s, 14s, the Rook) each team has
+  // captured in completed tricks so far this hand, for display next to a
+  // player's seat.
+  capturedPointCards() {
+    const cards = { A: [], B: [] };
+    for (const team of ['A', 'B']) {
+      for (const trick of this.tricksWonBy[team]) {
+        for (const card of trick) {
+          if (pointValue(card, this.ruleset) > 0) cards[team].push(card);
+        }
+      }
+    }
+    return cards;
+  }
+
   // ---------------------------------------------------------------------
   // View building - hides other players' hands.
   // ---------------------------------------------------------------------
@@ -476,6 +518,8 @@ class Room {
     base.bidAmount = this.bidAmount;
     base.trump = this.trump;
     base.currentHandPoints = this.currentHandPoints();
+    base.capturedPointCards = this.capturedPointCards();
+    base.dealButtonSeat = this.getDealButtonSeat();
 
     if (this.phase === 'bidding') {
       base.bidding = {

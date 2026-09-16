@@ -133,7 +133,7 @@ io.on('connection', (socket) => {
       if (room.phase !== 'handOver') throw new Error('Hand is not over yet');
       const meta = socketMeta.get(socket.id);
       const seat = room.findSeatByPlayerId(meta.playerId);
-      if (seat !== room.dealerSeat) throw new Error('Only the dealer deals the next hand');
+      if (seat !== room.getDealButtonSeat()) throw new Error('It is not your turn to deal');
       room.startHand();
       cb({ ok: true });
       broadcast(room);

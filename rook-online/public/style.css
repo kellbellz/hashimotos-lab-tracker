@@ -119,9 +119,14 @@ input, select {
   grid-template-rows: 90px 1fr 90px;
   grid-template-columns: 140px 1fr 140px;
   min-height: 320px;
+  transition: background 0.6s ease;
 }
+.table.trump-red { background: radial-gradient(circle at center, #7a2020 0%, #451212 100%); }
+.table.trump-yellow { background: radial-gradient(circle at center, #8a6d0f 0%, #4f3f09 100%); }
+.table.trump-green { background: radial-gradient(circle at center, var(--felt) 0%, var(--felt-dark) 100%); }
+.table.trump-black { background: radial-gradient(circle at center, #3a3a3a 0%, #161616 100%); }
 .seat-pos { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 8px; }
-.seat-pos.top { grid-area: top; padding-top: 24px; }
+.seat-pos.top { grid-area: top; }
 .seat-pos.left { grid-area: left; }
 .seat-pos.right { grid-area: right; }
 .seat-pos.bot { grid-area: bot; }
@@ -134,23 +139,19 @@ input, select {
 .seat-pos .dealer-badge { font-size: 10px; background: var(--accent); color: #2a1e00; padding: 1px 6px; border-radius: 6px; }
 .seat-pos .bid-status { font-size: 12px; font-weight: 700; color: var(--accent); }
 .seat-pos .bid-status.passed { font-weight: 400; font-style: italic; color: var(--muted); }
+.points-won-row { display: flex; flex-wrap: wrap; justify-content: center; max-width: 150px; margin-top: 2px; }
 
-.hand-points-bar {
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
+.hand-points-strip {
   display: flex;
-  gap: 14px;
-  background: rgba(0,0,0,0.4);
-  padding: 5px 16px;
-  border-radius: 999px;
+  justify-content: center;
+  gap: 18px;
+  background: var(--panel);
+  padding: 6px 16px;
   font-size: 12px;
   font-weight: 600;
-  white-space: nowrap;
-  z-index: 2;
+  border-bottom: 1px solid #263156;
 }
-.hand-points-bar .label { color: #cfe8db; font-weight: 400; margin-right: 4px; }
+.hand-points-strip .label { color: #cfe8db; font-weight: 400; margin-right: 4px; }
 
 .trick-center { grid-area: center; display: grid; grid-template-columns: repeat(3, 60px); grid-template-rows: repeat(3, 84px); place-items: center; gap: 2px; border-radius: 16px; transition: box-shadow 0.2s ease; }
 
@@ -171,6 +172,25 @@ input, select {
   margin-top: 10px; font-size: 13px; font-style: italic; color: var(--danger);
   animation: fadeSlideUp 0.4s ease, set-shake 0.5s ease;
 }
+
+.hand-result-center {
+  grid-area: center;
+  justify-self: center;
+  align-self: center;
+  background: rgba(0,0,0,0.55);
+  border-radius: 18px;
+  padding: 22px 40px;
+  text-align: center;
+  animation: fadeSlideUp 0.4s ease;
+}
+.hand-result-center.made { border: 3px solid var(--ok); box-shadow: 0 0 24px rgba(63, 185, 80, 0.4); }
+.hand-result-center.set { border: 3px solid var(--danger); box-shadow: 0 0 24px rgba(214, 69, 69, 0.4); animation: fadeSlideUp 0.4s ease, set-shake 0.5s ease; }
+.hrc-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.hrc-outcome { font-size: 32px; font-weight: 800; margin: 6px 0 14px; }
+.hand-result-center.made .hrc-outcome { color: var(--ok); }
+.hand-result-center.set .hrc-outcome { color: var(--danger); }
+.hrc-scores { display: flex; gap: 24px; justify-content: center; font-size: 16px; }
+.hrc-scores b { font-size: 22px; color: var(--accent); }
 .trick-center.trick-complete { box-shadow: 0 0 0 2px rgba(232, 185, 35, 0.35) inset; }
 .trick-center.clearable { cursor: pointer; animation: trick-pulse 1.1s ease-in-out infinite; }
 @keyframes trick-pulse {
@@ -209,6 +229,11 @@ input, select {
 }
 .hand-row .card:first-child { margin-left: 0; }
 .card.small { width: 44px; height: 62px; font-size: 14px; margin-left: -10px; }
+.card.mini { width: 24px; height: 32px; font-size: 9px; margin-left: -3px; margin-top: 2px; border-width: 1px; border-radius: 4px; box-shadow: none; }
+.card.mini:first-child { margin-left: 0; }
+.card.mini .label { display: none; }
+.card.mini .num { font-size: 12px; }
+.card.mini.card-rook .num { font-size: 13px; }
 .card .num { line-height: 1; }
 .card .label { font-size: 9px; font-weight: 700; letter-spacing: 0.5px; margin-top: 2px; text-transform: uppercase; }
 .card.card-red { color: #b3261e; }
