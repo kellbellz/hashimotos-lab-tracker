@@ -525,6 +525,16 @@ function renderTable() {
     if (state.bidder === seat && state.bidAmount) bits.push(`bid ${state.bidAmount}`);
     meta.textContent = bits.join(' · ');
     pos.appendChild(meta);
+    if (state.phase === 'bidding' && state.bidding) {
+      const entries = state.bidding.history.filter((h) => h.seat === seat);
+      if (entries.length > 0) {
+        const last = entries[entries.length - 1];
+        const bidStatus = document.createElement('div');
+        bidStatus.className = 'bid-status' + (last.pass ? ' passed' : '');
+        bidStatus.textContent = last.pass ? 'Passed' : `Bid ${last.bid}`;
+        pos.appendChild(bidStatus);
+      }
+    }
     if (seat === state.dealerSeat) {
       const badge = document.createElement('span');
       badge.className = 'dealer-badge';
