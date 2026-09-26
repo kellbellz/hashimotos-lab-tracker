@@ -81,7 +81,24 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 .composer { display: grid; gap: 8px; }
 .composer textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: 15px/1.45 var(--body); }
 .composer-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-.hint { font-size: 12.5px; color: var(--ink-3); }
+.hint { font-size: 12.5px; color: var(--ink-3); flex: 1; }
+.mic { width: 40px; height: 40px; flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); display: grid; place-items: center; color: var(--ink-2); }
+.mic:hover { border-color: var(--ink-3); color: var(--ink); }
+.mic svg { width: 18px; height: 18px; }
+.mic.on { background: var(--warn); border-color: var(--warn); color: var(--panel); animation: pulse 1.4s ease-out infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warn) 45%, transparent); } 100% { box-shadow: 0 0 0 12px transparent; } }
+@media (prefers-reduced-motion: reduce) { .mic.on { animation: none; } }
+.mic-note { margin: 0; font-size: 13.5px; color: var(--ink-2); background: var(--soft); border-radius: 10px; padding: 10px 12px; }
+.review { display: grid; gap: 10px; background: var(--soft); border-radius: 12px; padding: 12px; }
+.review-head { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.review ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; counter-reset: rv; }
+.review li { display: grid; grid-template-columns: 20px 1fr 24px; gap: 6px; align-items: center; counter-increment: rv; }
+.review li::before { content: counter(rv); font-size: 13px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.review li { align-items: start; }
+.review textarea { width: 100%; resize: none; line-height: 1.4; field-sizing: content; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 8px; font: 14.5px var(--body); }
+.review .x { border: 0; background: none; color: var(--ink-3); font-size: 18px; padding: 0; }
+.review .x:hover { color: var(--warn); }
+.review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cta { display: grid; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line); }
 .cta .btn.primary { width: 100%; padding: 11px 14px; font-size: 15px; margin-top: 12px; }
 
@@ -166,10 +183,20 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
       <form class="composer" id="composer">
         <textarea id="say" placeholder="What happens next, and who does it?" aria-label="Describe the next part of the process"></textarea>
         <div class="composer-row">
-          <span class="hint">Press Enter to add</span>
+          <button class="mic" id="micBtn" type="button" aria-label="Speak the process" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/><path d="M12 18v3"/></svg></button>
+          <span class="hint" id="hint">Tap the mic and talk, or type and press Enter</span>
           <button class="btn" type="submit">Add</button>
         </div>
       </form>
+      <p class="mic-note" id="micNote" role="status" hidden></p>
+      <div class="review" id="review" hidden>
+        <div class="review-head" id="reviewHead"></div>
+        <ol id="reviewList"></ol>
+        <div class="review-actions">
+          <button class="btn primary" id="reviewAdd" type="button">Add these steps</button>
+          <button class="btn" id="reviewCancel" type="button">Discard</button>
+        </div>
+      </div>
       <div class="cta">
         <button class="btn primary" id="designBtn" type="button">Design a better process</button>
       </div>
@@ -673,12 +700,147 @@ Reply with only JSON:
     save(); render(); $("procTitle").focus();
   }
 
+  /* ---------- Dictation and step splitting ---------- */
+  const CUES = /\s*,?\s*\b(?:and then|then|next|after that|afterwards|once that's done|once that is done|after which|finally|at the end)\b\s*,?\s*/gi;
+  function tidy(t) {
+    t = t.replace(/\b(?:um+|uh+|you know|like,|so yeah|basically)\b[,]?\s*/gi, "").replace(/\s{2,}/g, " ").trim().replace(/^[,;\s]+|[,;\s]+$/g, "");
+    t = t.replace(/^(?:(?:so|and|well|okay|ok|now|first(?: of all)?)\b[,]?\s*)+/i, "").replace(/(?:\s*,?\s*\b(?:and|so|then|but)\b)+$/i, "").trim();
+    if (!t) return "";
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return /[.!?]$/.test(t) ? t : t + ".";
+  }
+  function splitLocal(text) {
+    return text
+      .split(/(?<=[.!?])\s+|\n+/)
+      .flatMap((s) => s.split(CUES))
+      .map(tidy)
+      .filter((s) => s.split(/\s+/).length >= 3);
+  }
+  function looksMulti(text) {
+    return splitLocal(text).length > 1;
+  }
+  async function splitSteps(text) {
+    if (sample) {
+      try {
+        const res = await sample.json(`Someone dictated how a process works. Speech recognition may have left out punctuation or added filler words. Split it into the ordered steps of the process. One step per item, written as one clear sentence that keeps who does it (use their words for people and teams), with filler removed. Do not add steps they didn't say, and do not improve the process.
+
+Dictation:
+${text.slice(0, 12000)}
+
+Reply with only a JSON array of strings.`, { modelTier: "quick" });
+        if (Array.isArray(res)) {
+          const out = res.map((x) => tidy(String(x))).filter(Boolean);
+          if (out.length) return out;
+        }
+      } catch (e) {
+        if (PERMANENT.has(e && e.code)) sample = null;
+      }
+    }
+    return splitLocal(text);
+  }
+
+  let pending = [];
+  function renderReview() {
+    const box = $("review");
+    box.hidden = !pending.length;
+    if (!pending.length) return;
+    $("reviewHead").textContent = `Heard ${pending.length} step${pending.length === 1 ? "" : "s"}. Fix anything that's off, then add them.`;
+    const list = $("reviewList");
+    list.replaceChildren();
+    pending.forEach((t, i) => {
+      const li = el("li");
+      const inp = el("textarea");
+      inp.value = t; inp.id = "rv" + i;
+      inp.rows = Math.max(1, Math.ceil(t.length / 32));
+      inp.setAttribute("aria-label", `Step ${i + 1}`);
+      inp.oninput = () => { pending[i] = inp.value; };
+      inp.onkeydown = (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("reviewAdd").focus(); } };
+      const x = el("button", "x", "×");
+      x.type = "button"; x.setAttribute("aria-label", `Remove step ${i + 1}`);
+      x.onclick = () => { pending.splice(i, 1); renderReview(); };
+      li.append(inp, x);
+      list.append(li);
+    });
+  }
+  async function segmentInto(text) {
+    text = text.trim();
+    if (!text) return;
+    $("hint").textContent = "Splitting into steps…";
+    const steps = await splitSteps(text);
+    $("hint").textContent = "Tap the mic and talk, or type and press Enter";
+    if (!steps.length) { micNote("Couldn't find any steps in that. Try again with a little more detail."); return; }
+    pending = pending.concat(steps);
+    $("say").value = "";
+    renderReview();
+    $("reviewAdd").focus();
+  }
+  $("reviewAdd").onclick = () => {
+    const add = pending.map((t) => t.trim()).filter(Boolean);
+    pending = []; renderReview();
+    if (!add.length) return;
+    clearExample();
+    state.lines.push(...add);
+    changed();
+  };
+  $("reviewCancel").onclick = () => { pending = []; renderReview(); $("say").focus(); };
+
+  function micNote(text) { const n = $("micNote"); n.textContent = text || ""; n.hidden = !text; }
+
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  let rec = null, listening = false, heard = "", base = "";
+  const BLOCKED = "The microphone is blocked on this page. Tap the text box and use your keyboard's mic key to dictate. Long dictation is split into steps when you press Enter.";
+  function setListening(on) {
+    listening = on;
+    $("micBtn").classList.toggle("on", on);
+    $("micBtn").setAttribute("aria-pressed", String(on));
+    $("micBtn").setAttribute("aria-label", on ? "Stop listening" : "Speak the process");
+    $("hint").textContent = on ? "Listening… describe the steps, then tap to stop" : "Tap the mic and talk, or type and press Enter";
+  }
+  $("micBtn").onclick = () => {
+    if (listening) { rec && rec.stop(); return; }
+    micNote("");
+    if (!SR) { micNote(BLOCKED.replace("is blocked on this page", "isn't supported in this browser")); $("say").focus(); return; }
+    try {
+      rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = navigator.language || "en-US";
+      heard = "";
+      base = $("say").value.trim();
+      rec.onresult = (e) => {
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const r = e.results[i];
+          if (r.isFinal) heard += r[0].transcript.trim() + ". ";
+          else interim += r[0].transcript;
+        }
+        $("say").value = [base, heard + interim].filter(Boolean).join(" ");
+      };
+      rec.onerror = (e) => {
+        if (e.error === "not-allowed" || e.error === "service-not-allowed" || e.error === "audio-capture") micNote(BLOCKED);
+        else if (e.error === "no-speech") micNote("Didn't catch anything. Tap the mic and try again.");
+        else if (e.error === "network") micNote("Speech recognition needs an internet connection. Check it and try again.");
+      };
+      rec.onend = () => {
+        setListening(false);
+        const text = $("say").value.trim();
+        if (heard.trim() && text) segmentInto(text);
+      };
+      rec.start();
+      setListening(true);
+    } catch {
+      setListening(false);
+      micNote(BLOCKED);
+    }
+  };
+
   $("composer").addEventListener("submit", (e) => {
     e.preventDefault();
     const v = $("say").value.trim();
     if (!v) return;
+    if (looksMulti(v)) { segmentInto(v); return; }
     clearExample();
-    state.lines.push(v);
+    state.lines.push(tidy(v) || v);
     $("say").value = "";
     changed();
   });
