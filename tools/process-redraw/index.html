@@ -98,6 +98,11 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 .review textarea { width: 100%; resize: none; line-height: 1.4; field-sizing: content; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 8px; font: 14.5px var(--body); }
 .review .x { border: 0; background: none; color: var(--ink-3); font-size: 18px; padding: 0; }
 .review .x:hover { color: var(--warn); }
+.access { display: grid; gap: 6px; background: var(--soft); border-radius: 10px; padding: 12px; }
+.access label { font-size: 14px; font-weight: 600; }
+.access-row { display: flex; gap: 8px; }
+.access input { flex: 1; min-width: 0; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 7px 10px; font: 15px var(--body); }
+.access p { margin: 0; font-size: 13px; color: var(--ink-3); }
 .review-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .cta { display: grid; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line); }
 .cta .btn.primary { width: 100%; padding: 11px 14px; font-size: 15px; margin-top: 12px; }
@@ -175,6 +180,14 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
         <span>You're viewing an example.</span>
         <button class="link" id="startOwn" type="button">Start your own</button>
       </div>
+      <form class="access" id="accessForm" hidden>
+        <label for="accessCode">Access code</label>
+        <div class="access-row">
+          <input id="accessCode" type="text" autocomplete="off" spellcheck="false" placeholder="Paste your code">
+          <button class="btn primary" type="submit">Save</button>
+        </div>
+        <p>It's in your purchase email. You only need to enter it once on this device.</p>
+      </form>
       <input class="title-input" id="procTitle" type="text" placeholder="Name this process" aria-label="Process name">
       <div>
         <div class="label">What happens, step by step</div>
@@ -570,6 +583,8 @@ Reply with only JSON:
       case "rate_limited": return "Too many requests right now. Wait a minute, then add your next line.";
       case "session_expired": return "Sign in to Claude again, then try again.";
       case "invalid_json": return "Claude's answer came back malformed. Try again.";
+      case "needs_code": return "Enter your access code to turn on Claude.";
+      case "not_configured": return "The server isn't set up yet. Add ANTHROPIC_API_KEY in the hosting settings.";
       case "prompt_too_large": return "The description is too long to process at once. Remove a few lines and try again.";
       case "refused": return "Claude declined this description. Rephrase it and try again.";
       default: return "Couldn't reach Claude. Try again.";
@@ -864,8 +879,70 @@ Reply with only a JSON array of strings.`, { modelTier: "quick" });
 
   render();
 
+  /* ---------- Claude connection ----------
+     On claude.ai the page uses the viewer's own Claude through the "sample" capability.
+     On a normal website it calls this site's /api/claude function, which holds the API key. */
+  const CODE_KEY = "process-redraw-code";
+  function accessCode() { try { return localStorage.getItem(CODE_KEY) || ""; } catch { return ""; } }
+  function showCodeBox(on = true) { $("accessForm").hidden = !on; if (on) $("accessCode").value = accessCode(); }
+  $("accessForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("accessCode").value.trim();
+    if (!v) return;
+    try { localStorage.setItem(CODE_KEY, v); } catch {}
+    showCodeBox(false);
+    setStatus("");
+    if (state.lines.length && !state.example) mapCurrent();
+  });
+
+  function parseLoose(text) {
+    const t = String(text || "").trim();
+    const tries = [t];
+    const fence = t.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) tries.push(fence[1]);
+    const a = t.search(/[[{]/), b = Math.max(t.lastIndexOf("}"), t.lastIndexOf("]"));
+    if (a !== -1 && b > a) tries.push(t.slice(a, b + 1));
+    for (const x of tries) { try { return JSON.parse(x); } catch {} }
+    return undefined;
+  }
+  function serverSample() {
+    return {
+      async json(prompt, opts = {}) {
+        let r;
+        try {
+          r = await fetch("api/claude", {
+            method: "POST",
+            headers: { "content-type": "application/json", "x-access-code": accessCode() },
+            body: JSON.stringify({ prompt, tier: opts.modelTier === "quick" ? "quick" : "default" }),
+            signal: opts.signal,
+          });
+        } catch (e) {
+          throw { code: e && e.name === "AbortError" ? "cancelled" : "upstream_error" };
+        }
+        const data = await r.json().catch(() => ({}));
+        if (!r.ok) {
+          if (data.code === "needs_code") showCodeBox(true);
+          throw { code: data.code || "upstream_error" };
+        }
+        const v = parseLoose(data.text);
+        if (v === undefined) throw { code: "invalid_json", text: data.text };
+        return v;
+      },
+    };
+  }
+
   if (window.claude && typeof window.claude.use === "function") {
     window.claude.use("sample").then((s) => { sample = s || null; render(); }).catch(() => {});
+  } else if (/^https?:$/.test(location.protocol)) {
+    fetch("api/claude", { headers: { accept: "application/json" } })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((info) => {
+        if (!info || !info.ok) return;
+        sample = serverSample();
+        if (info.needsCode && !accessCode()) showCodeBox(true);
+        render();
+      })
+      .catch(() => {});
   }
 })();
 </script>
