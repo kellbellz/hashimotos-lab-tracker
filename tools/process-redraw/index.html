@@ -1,221 +1,193 @@
 <title>Process Redraw</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 :root {
-  --bg: #eef2f4;
+  --bg: #f3f4f6;
   --panel: #ffffff;
-  --panel-2: #f6f8f9;
-  --ink: #16212b;
-  --ink-2: #4b5a67;
-  --ink-3: #7b8994;
-  --line: #d5dde2;
-  --accent: #1d5f7a;
+  --soft: #f6f7f9;
+  --ink: #1b1f26;
+  --ink-2: #5b6370;
+  --ink-3: #8a929e;
+  --line: #e3e6ea;
+  --accent: #1f5f7a;
   --accent-ink: #ffffff;
-  --warn: #b4481f;
-  --warn-bg: #fbe9e1;
+  --warn: #b04a1f;
   --ai: #6a4ee0;
-  --ai-bg: #efebfd;
-  --human: #c47a0c;
-  --human-bg: #fcf1dd;
+  --human: #c07a0c;
   --phys: #2c8356;
-  --phys-bg: #e2f3e9;
-  --r1: #2e6fd8; --r2: #cf4a45; --r3: #23907f; --r4: #b8740a;
-  --r5: #8653d0; --r6: #cc4f93; --r7: #5b8a2d; --r8: #52606d;
-  --tint: 13%;
+  --r1: #2e6fd8; --r2: #cf4a45; --r3: #1f9280; --r4: #b8740a;
+  --r5: #8653d0; --r6: #c94f90; --r7: #5b8a2d; --r8: #5b6875;
   --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
   --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
-  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --bg: #0f1519; --panel: #172026; --panel-2: #1d272e; --ink: #e6edf1; --ink-2: #aab8c2; --ink-3: #7d8c97;
-    --line: #2b3841; --accent: #5fb0d0; --accent-ink: #0b1216; --warn: #f08a62; --warn-bg: #3a2119;
-    --ai: #a896ff; --ai-bg: #262045; --human: #f0b04c; --human-bg: #3a2c14; --phys: #5cc68e; --phys-bg: #173325;
-    --r1: #6ea2ff; --r2: #ff7f7a; --r3: #4fd0bd; --r4: #e8a93c; --r5: #b58cff; --r6: #f47fbd; --r7: #97c85f; --r8: #9aa9b6;
-    --tint: 20%;
+    --bg: #111418; --panel: #181c21; --soft: #1e2329; --ink: #e8ebef; --ink-2: #a7afba; --ink-3: #78818c;
+    --line: #2a3038; --accent: #6bb6d6; --accent-ink: #0c1216; --warn: #f0906a;
+    --ai: #a998ff; --human: #efb24f; --phys: #5ec790;
+    --r1: #72a5ff; --r2: #ff8480; --r3: #52cfbc; --r4: #e8ab40; --r5: #b88fff; --r6: #f283bf; --r7: #9bcb62; --r8: #9fadb9;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --bg: #0f1519; --panel: #172026; --panel-2: #1d272e; --ink: #e6edf1; --ink-2: #aab8c2; --ink-3: #7d8c97;
-  --line: #2b3841; --accent: #5fb0d0; --accent-ink: #0b1216; --warn: #f08a62; --warn-bg: #3a2119;
-  --ai: #a896ff; --ai-bg: #262045; --human: #f0b04c; --human-bg: #3a2c14; --phys: #5cc68e; --phys-bg: #173325;
-  --r1: #6ea2ff; --r2: #ff7f7a; --r3: #4fd0bd; --r4: #e8a93c; --r5: #b58cff; --r6: #f47fbd; --r7: #97c85f; --r8: #9aa9b6;
-  --tint: 20%;
+  --bg: #111418; --panel: #181c21; --soft: #1e2329; --ink: #e8ebef; --ink-2: #a7afba; --ink-3: #78818c;
+  --line: #2a3038; --accent: #6bb6d6; --accent-ink: #0c1216; --warn: #f0906a;
+  --ai: #a998ff; --human: #efb24f; --phys: #5ec790;
+  --r1: #72a5ff; --r2: #ff8480; --r3: #52cfbc; --r4: #e8ab40; --r5: #b88fff; --r6: #f283bf; --r7: #9bcb62; --r8: #9fadb9;
 }
 * { box-sizing: border-box; }
 [hidden] { display: none !important; }
-body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); padding-inline: 16px; padding-block: 20px 40px; }
-.wrap { max-width: 1480px; margin: 0 auto; display: grid; gap: 18px; }
-h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
-button { font: inherit; cursor: pointer; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 var(--body); padding-inline: 16px; padding-block: 28px 56px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 24px; }
+h1, h2, h3 { margin: 0; text-wrap: balance; }
+button { font: inherit; cursor: pointer; color: inherit; }
 button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
-header.top h1 { font-size: 30px; line-height: 1.1; }
-header.top p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; }
-.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+/* Header */
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.top h1 { font: 700 26px/1.1 var(--display); letter-spacing: -0.01em; }
+.top p { margin: 4px 0 0; color: var(--ink-2); font-size: 15px; }
 
-.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 8px 14px; font-size: 14.5px; font-weight: 500; }
 .btn:hover { border-color: var(--ink-3); }
 .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
-.btn.primary:hover { filter: brightness(1.08); }
-.btn:disabled { opacity: .5; cursor: default; }
-.btn.small { padding: 4px 9px; font-size: 13px; }
+.btn.primary:hover { filter: brightness(1.07); }
+.btn:disabled { opacity: .45; cursor: default; filter: none; }
+.link { border: 0; background: none; padding: 0; color: var(--accent); font-size: 14px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; }
 
-.grid { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-@media (max-width: 1180px) { .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .narrate { grid-column: 1 / -1; } }
-@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+.layout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 880px) { .layout { grid-template-columns: minmax(0, 1fr); } }
 
-.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
-.panel-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; flex-wrap: wrap; }
-.panel-head h2 { font-size: 20px; }
-.eyebrow { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
-.status { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; min-height: 20px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; min-width: 0; }
+
+/* Narration */
+.narrate { padding: 20px; display: grid; gap: 16px; position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); }
+@media (max-width: 880px) { .narrate { position: static; } }
+.label { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+.title-input { width: 100%; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--ink); padding: 4px 0 8px; font: 600 18px var(--body); }
+.title-input:focus-visible { outline: none; border-bottom-color: var(--accent); }
+.example-note { background: var(--soft); border-radius: 10px; padding: 10px 12px; font-size: 14px; color: var(--ink-2); display: flex; justify-content: space-between; gap: 8px; align-items: center; flex-wrap: wrap; }
+.transcript { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-height: 38vh; overflow-y: auto; }
+.transcript li { display: grid; grid-template-columns: 22px 1fr 24px; gap: 6px; padding: 6px 0; font-size: 14.5px; color: var(--ink-2); border-bottom: 1px solid var(--line); }
+.transcript li:last-child { border-bottom: 0; }
+.transcript .n { color: var(--ink-3); font-size: 13px; font-variant-numeric: tabular-nums; }
+.transcript .x { border: 0; background: none; color: var(--ink-3); font-size: 18px; line-height: 1; padding: 0; opacity: .5; }
+.transcript li:hover .x, .transcript .x:focus-visible { opacity: 1; }
+.transcript .x:hover { color: var(--warn); }
+.empty { color: var(--ink-3); font-size: 14.5px; margin: 0; }
+.composer { display: grid; gap: 8px; }
+.composer textarea { width: 100%; min-height: 76px; resize: vertical; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: 15px/1.45 var(--body); }
+.composer-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.hint { font-size: 12.5px; color: var(--ink-3); }
+.cta { display: grid; gap: 10px; padding-top: 4px; border-top: 1px solid var(--line); }
+.cta .btn.primary { width: 100%; padding: 11px 14px; font-size: 15px; margin-top: 12px; }
+
+/* Map */
+.map { padding: 20px 24px 28px; display: grid; gap: 20px; }
+@media (max-width: 480px) { .map { padding: 16px; } }
+.map-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.seg { display: inline-flex; background: var(--soft); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { border: 0; background: none; border-radius: 8px; padding: 7px 14px; font-size: 14.5px; font-weight: 500; color: var(--ink-2); }
+.seg button[aria-selected="true"] { background: var(--panel); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.seg .count { color: var(--ink-3); font-weight: 400; margin-left: 4px; font-variant-numeric: tabular-nums; }
+
+.status { font-size: 14px; color: var(--ink-2); display: flex; align-items: center; gap: 8px; }
 .status.err { color: var(--warn); }
-.spin { width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+.spin { width: 14px; height: 14px; flex: none; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 
-/* Narration */
-.narrate { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
-@media (max-width: 1180px) { .narrate { position: static; } }
-.title-input { width: 100%; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: 600 15px var(--body); }
-.transcript { display: grid; gap: 6px; max-height: 44vh; overflow-y: auto; padding-right: 2px; counter-reset: line; }
-.line { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: start; background: var(--panel-2); border-radius: 8px; padding: 7px 8px; font-size: 14px; }
-.line .n { font: 500 11px/20px var(--mono); color: var(--ink-3); }
-.line .x { border: 0; background: none; color: var(--ink-3); padding: 0 4px; font-size: 16px; line-height: 20px; }
-.line .x:hover { color: var(--warn); }
-.empty { color: var(--ink-3); font-size: 14px; }
-.composer { display: grid; gap: 8px; }
-.composer textarea { width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: 15px/1.45 var(--body); }
-.composer-row { display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-.hint { font-size: 12.5px; color: var(--ink-3); }
-.done-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.summary { margin: 0; font-size: 15.5px; color: var(--ink-2); max-width: 62ch; }
+.summary b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
 
-/* Legends */
-.legend { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12.5px; font-weight: 500; background: color-mix(in srgb, var(--c) var(--tint), var(--panel)); color: var(--ink); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); white-space: nowrap; }
-.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.mixbar { display: grid; gap: 8px; }
+.bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden; gap: 2px; }
+.bar span { background: var(--c); }
+.mixlegend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: 14px; color: var(--ink-2); }
+.mixlegend span { display: inline-flex; align-items: center; gap: 7px; }
+.mixlegend span::before { content: ""; width: 10px; height: 10px; border-radius: 3px; background: var(--c); }
+.mixlegend b { color: var(--ink); font-variant-numeric: tabular-nums; }
 
-/* Stats */
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
-.stat { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
-.stat b { display: block; font: 700 20px/1.1 var(--display); font-variant-numeric: tabular-nums; }
-.stat.wide { grid-column: 1 / -1; }
-.stat.wide b { font-size: 16px; }
-.stat span { font-size: 12px; color: var(--ink-2); }
-.headline { font-size: 14px; color: var(--ink-2); margin: 0; }
+/* Timeline */
+.timeline { display: grid; gap: 0; }
+.group { --c: var(--r8); display: grid; gap: 4px; }
+.group-head { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; }
+.group-head .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--c); flex: none; }
+.group-head .sub { font-weight: 400; color: var(--ink-3); font-size: 13.5px; }
+.steps { list-style: none; margin: 0 0 0 5px; padding: 4px 0 4px 21px; border-left: 2px solid var(--c); display: grid; gap: 14px; }
+.step { display: grid; grid-template-columns: 28px 1fr; gap: 10px; align-items: start; }
+.step .num { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--c); color: var(--ink); display: grid; place-items: center; font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums; background: var(--panel); }
+.step.decision .num { border-radius: 5px; transform: rotate(45deg) scale(.86); }
+.step.decision .num span { transform: rotate(-45deg); }
+.step .text { font-size: 15.5px; line-height: 1.45; padding-top: 1px; overflow-wrap: anywhere; }
+.step .detail { font-size: 13.5px; color: var(--ink-3); margin-top: 2px; }
+.step .pain { font-size: 13.5px; color: var(--warn); margin-top: 2px; }
+.handoff { margin: 6px 0 6px 5px; padding: 6px 0 6px 21px; border-left: 2px dashed var(--line); font-size: 13px; color: var(--ink-3); }
+.placeholder { color: var(--ink-3); font-size: 15px; padding: 32px 8px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
 
-/* Flow */
-.flow-scroll { overflow-x: auto; }
-.flow { display: grid; gap: 0; min-width: 260px; }
-.node-wrap { display: grid; justify-items: stretch; }
-.arrow { justify-self: center; width: 2px; height: 18px; background: var(--line); position: relative; }
-.arrow::after { content: ""; position: absolute; left: -4px; bottom: -1px; border: 5px solid transparent; border-top-color: var(--ink-3); border-bottom: 0; }
-.node { --c: var(--r8); position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 8px; padding: 10px 12px 10px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: color-mix(in srgb, var(--c) var(--tint), var(--panel)); }
-.node .num { font: 500 12px/1 var(--mono); color: var(--panel); background: var(--c); border-radius: 6px; height: 24px; display: grid; place-items: center; }
-.node.decision .num { transform: rotate(45deg) scale(.82); border-radius: 3px; }
-.node.decision .num span { transform: rotate(-45deg); }
-.node.wait { border-style: dashed; }
-.node .label { font-weight: 500; font-size: 14.5px; line-height: 1.35; overflow-wrap: anywhere; }
-.node .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
-.tag { font-size: 11.5px; border-radius: 5px; padding: 1px 7px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-2); }
-.tag.role { color: var(--ink); font-weight: 600; border-color: color-mix(in srgb, var(--c) 55%, transparent); }
-.tag.pain { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
-.tag.kind { font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-size: 10.5px; }
-.branches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.branch { font: 500 11.5px var(--mono); padding: 1px 7px; border-radius: 5px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-2); }
-.node .note { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
-.mode-ai { --c: var(--ai); }
-.mode-human { --c: var(--human); }
-.mode-physical { --c: var(--phys); }
-.modebadge { font: 600 10.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; background: var(--c); color: var(--panel); }
-.panel.stale .flow { opacity: .55; }
-.removed { display: grid; gap: 6px; }
-.removed h3 { font-size: 14px; }
-.removed ul { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-2); display: grid; gap: 4px; }
-.placeholder { border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--ink-3); font-size: 14px; text-align: center; }
-.example-flag { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--human-bg); color: var(--human); padding: 3px 8px; border-radius: 5px; }
+.removed { border-top: 1px solid var(--line); padding-top: 14px; }
+.removed summary { cursor: pointer; font-size: 14.5px; font-weight: 500; color: var(--ink-2); }
+.removed ul { margin: 10px 0 0; padding-left: 18px; font-size: 14.5px; color: var(--ink-2); display: grid; gap: 6px; }
+.removed b { color: var(--ink); font-weight: 500; }
 
-.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13.5px; background: var(--warn-bg); color: var(--ink); padding: 8px 10px; border-radius: 8px; }
+.map-foot { display: flex; justify-content: flex-end; }
+
+.confirm { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 14.5px; background: var(--panel); border: 1px solid var(--line); padding: 10px 14px; border-radius: 10px; }
 </style>
 
 <div class="wrap">
   <header class="top">
     <div>
       <h1>Process Redraw</h1>
-      <p>Describe how a process works today, one sentence at a time. The current-state map is drawn as you go, color-coded by who owns each step. When you finish, Claude redesigns it and marks every step as AI, human, or physical work.</p>
+      <p>Describe a process in your own words. See who does what today, then a leaner version.</p>
     </div>
-    <div class="top-actions">
-      <span class="example-flag" id="exampleFlag">Example process loaded</span>
-      <button class="btn" id="newBtn" type="button">Start a new process</button>
-    </div>
+    <button class="btn" id="newBtn" type="button">New process</button>
   </header>
   <div class="confirm" id="confirmNew" hidden>
-    This clears the narration and both maps.
-    <button class="btn small primary" id="confirmYes" type="button">Clear and start over</button>
-    <button class="btn small" id="confirmNo" type="button">Keep it</button>
+    Clear this process and start over?
+    <button class="btn primary" id="confirmYes" type="button">Clear it</button>
+    <button class="btn" id="confirmNo" type="button">Cancel</button>
   </div>
 
-  <div class="grid">
-    <section class="panel narrate" aria-labelledby="narrateH">
-      <div>
-        <div class="eyebrow">Step 1 · Tell it</div>
-        <h2 id="narrateH">Describe the process</h2>
+  <div class="layout">
+    <aside class="card narrate" aria-label="Describe the process">
+      <div class="example-note" id="exampleNote" hidden>
+        <span>You're viewing an example.</span>
+        <button class="link" id="startOwn" type="button">Start your own</button>
       </div>
-      <input class="title-input" id="procTitle" type="text" placeholder="Process name, e.g. New hire onboarding" aria-label="Process name">
-      <div class="transcript" id="transcript" aria-live="polite"></div>
+      <input class="title-input" id="procTitle" type="text" placeholder="Name this process" aria-label="Process name">
+      <div>
+        <div class="label">What happens, step by step</div>
+        <ol class="transcript" id="transcript" aria-live="polite"></ol>
+      </div>
       <form class="composer" id="composer">
-        <textarea id="say" placeholder="What happens next, and who does it? e.g. “Then the manager emails HR to approve the offer.”" aria-label="Describe the next part of the process"></textarea>
+        <textarea id="say" placeholder="What happens next, and who does it?" aria-label="Describe the next part of the process"></textarea>
         <div class="composer-row">
-          <span class="hint">Enter adds it · Shift+Enter for a new line · Use your keyboard's mic key to dictate</span>
-          <button class="btn primary" type="submit">Add</button>
+          <span class="hint">Press Enter to add</span>
+          <button class="btn" type="submit">Add</button>
         </div>
       </form>
-      <div class="done-row">
-        <button class="btn primary" id="designBtn" type="button">Design the better process</button>
-        <button class="btn" id="redrawBtn" type="button">Redraw current map</button>
+      <div class="cta">
+        <button class="btn primary" id="designBtn" type="button">Design a better process</button>
       </div>
-      <div class="status" id="aiStatus"></div>
-    </section>
+    </aside>
 
-    <section class="panel" id="currentPanel" aria-labelledby="curH">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">Step 2 · Today</div>
-          <h2 id="curH">Current process</h2>
+    <main class="card map" aria-label="Process map">
+      <div class="map-head">
+        <div class="seg" role="tablist" aria-label="Which version">
+          <button role="tab" id="tabToday" type="button">Today<span class="count" id="countToday"></span></button>
+          <button role="tab" id="tabBetter" type="button">Redesigned<span class="count" id="countBetter"></span></button>
         </div>
-        <button class="btn small" id="copyCur" type="button">Copy as Mermaid</button>
+        <div class="status" id="status" aria-live="polite"></div>
       </div>
-      <div class="status" id="curStatus"></div>
-      <div class="legend" id="curLegend" aria-label="Responsible parties"></div>
-      <div class="stats" id="curStats"></div>
-      <div class="flow-scroll"><div class="flow" id="curFlow"></div></div>
-    </section>
-
-    <section class="panel" id="futurePanel" aria-labelledby="futH">
-      <div class="panel-head">
-        <div>
-          <div class="eyebrow">Step 3 · Redesigned</div>
-          <h2 id="futH">Suggested process</h2>
-        </div>
-        <button class="btn small" id="copyFut" type="button">Copy as Mermaid</button>
+      <div id="view"></div>
+      <div class="map-foot">
+        <button class="link" id="copyBtn" type="button">Copy as Mermaid</button>
       </div>
-      <div class="status" id="futStatus"></div>
-      <div class="legend">
-        <span class="chip mode-ai">AI / automated</span>
-        <span class="chip mode-human">Human decision or action</span>
-        <span class="chip mode-physical">Physical step</span>
-      </div>
-      <p class="headline" id="futHeadline"></p>
-      <div class="stats" id="futStats"></div>
-      <div class="flow-scroll"><div class="flow" id="futFlow"></div></div>
-      <div class="removed" id="futRemoved"></div>
-    </section>
+    </main>
   </div>
 </div>
 
@@ -274,36 +246,6 @@ header.top p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; }
       ]
     }
   };
-
-  let state = load() || structuredClone(EXAMPLE);
-  let sample = null;
-  let curCtl = null;
-  let futCtl = null;
-  const busy = { cur: false, fut: false };
-
-  function load() {
-    try { const raw = localStorage.getItem(STORE); return raw ? JSON.parse(raw) : null; } catch { return null; }
-  }
-  function save() {
-    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
-  }
-  function el(tag, cls, text) {
-    const n = document.createElement(tag);
-    if (cls) n.className = cls;
-    if (text != null) n.textContent = text;
-    return n;
-  }
-
-  /* ---------- Role colors: stable per role name ---------- */
-  function roleColor(role) {
-    state.roleOrder = state.roleOrder || [];
-    const key = (role || "Unassigned").trim().toLowerCase();
-    let i = state.roleOrder.indexOf(key);
-    if (i === -1) { state.roleOrder.push(key); i = state.roleOrder.length - 1; }
-    return `var(${ROLE_VARS[i % ROLE_VARS.length]})`;
-  }
-
-  /* ---------- Local quick parse (used when Claude is unavailable, and as instant preview) ---------- */
   const PRONOUNS = /^(i|we|you|they|he|she|it|this|that|there|someone|somebody)$/i;
   function localParse(lines) {
     const steps = [];
@@ -331,85 +273,40 @@ header.top p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; }
     return { steps, draft: true };
   }
 
-  /* ---------- Rendering ---------- */
-  function renderTranscript() {
-    const box = $("transcript");
-    box.replaceChildren();
-    if (!state.lines.length) {
-      box.append(el("div", "empty", "Nothing yet. Start with the trigger: what kicks this process off, and who is involved?"));
-      return;
-    }
-    state.lines.forEach((text, i) => {
-      const row = el("div", "line");
-      row.append(el("span", "n", String(i + 1).padStart(2, "0")), el("span", "", text));
-      const x = el("button", "x", "×");
-      x.type = "button";
-      x.setAttribute("aria-label", `Remove line ${i + 1}`);
-      x.onclick = () => { state.lines.splice(i, 1); changed(); };
-      row.append(x);
-      box.append(row);
-    });
-    box.scrollTop = box.scrollHeight;
+
+  let state = load() || structuredClone(EXAMPLE);
+  state.view = state.view || "today";
+  let sample = null;
+  let curCtl = null;
+  let futCtl = null;
+  const busy = { cur: false, fut: false };
+  let statusMsg = { text: "", busy: false, err: false };
+
+  function load() {
+    try { const raw = localStorage.getItem(STORE); return raw ? JSON.parse(raw) : null; } catch { return null; }
   }
-
-  function arrow() { return el("div", "arrow"); }
-
-  function handoffs(steps, key) {
-    let n = 0;
-    for (let i = 1; i < steps.length; i++) {
-      if ((steps[i][key] || "").toLowerCase() !== (steps[i - 1][key] || "").toLowerCase()) n++;
-    }
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
+  }
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
     return n;
   }
-
-  function stat(val, label, cls = "") {
-    const s = el("div", ("stat " + cls).trim());
-    s.append(el("b", "", String(val)), el("span", "", label));
-    return s;
+  function roleColor(role) {
+    state.roleOrder = state.roleOrder || [];
+    const key = (role || "Unassigned").trim().toLowerCase();
+    let i = state.roleOrder.indexOf(key);
+    if (i === -1) { state.roleOrder.push(key); i = state.roleOrder.length - 1; }
+    return `var(${ROLE_VARS[i % ROLE_VARS.length]})`;
   }
 
-  function renderCurrent() {
-    const flow = $("curFlow"), legend = $("curLegend"), stats = $("curStats");
-    flow.replaceChildren(); legend.replaceChildren(); stats.replaceChildren();
-    const cur = state.current;
-    if (!cur || !cur.steps || !cur.steps.length) {
-      flow.append(el("div", "placeholder", "Your current process appears here as you describe it."));
-      return;
-    }
-    const roles = [];
-    cur.steps.forEach((s) => { if (!roles.some((r) => r.toLowerCase() === (s.role || "").toLowerCase())) roles.push(s.role || "Unassigned"); });
-    roles.forEach((r) => { const c = el("span", "chip", r); c.style.setProperty("--c", roleColor(r)); legend.append(c); });
-
-    const pains = cur.steps.filter((s) => s.pain).length;
-    stats.append(stat(cur.steps.length, "steps"), stat(roles.length, "people / teams"), stat(handoffs(cur.steps, "role"), "handoffs"), stat(pains, "pain points"));
-
-    cur.steps.forEach((s, i) => {
-      const wrap = el("div", "node-wrap");
-      if (i) wrap.append(arrow());
-      const kind = s.kind || "task";
-      const n = el("div", `node ${kind}`);
-      n.style.setProperty("--c", roleColor(s.role));
-      const num = el("div", "num"); num.append(el("span", "", String(s.id ?? i + 1)));
-      const body = el("div");
-      body.append(el("div", "label", s.label));
-      const meta = el("div", "meta");
-      const r = el("span", "tag role", s.role || "Unassigned");
-      meta.append(r);
-      if (kind !== "task") meta.append(el("span", "tag kind", kind));
-      if (s.pain) meta.append(el("span", "tag pain", "⚠ " + s.pain));
-      body.append(meta);
-      if (Array.isArray(s.branches) && s.branches.length) {
-        const b = el("div", "branches");
-        s.branches.forEach((br) => b.append(el("span", "branch", `${br.label} → ${br.to}`)));
-        body.append(b);
-      }
-      n.append(num, body);
-      wrap.append(n);
-      flow.append(wrap);
-    });
-  }
-
-  const MODE_LABEL = { ai: "AI", human: "Human", physical: "Physical" };
+  const MODE = {
+    ai: { name: "AI or automation", short: "AI", c: "var(--ai)" },
+    human: { name: "A person", short: "human", c: "var(--human)" },
+    physical: { name: "Physical step", short: "physical", c: "var(--phys)" }
+  };
   function normMode(m) {
     m = String(m || "").toLowerCase();
     if (m.startsWith("ai") || m.includes("auto")) return "ai";
@@ -417,79 +314,179 @@ header.top p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; }
     return "human";
   }
 
-  function renderFuture() {
-    const flow = $("futFlow"), stats = $("futStats"), removed = $("futRemoved"), head = $("futHeadline");
-    flow.replaceChildren(); stats.replaceChildren(); removed.replaceChildren(); head.textContent = "";
-    const fut = state.future;
-    $("futurePanel").classList.toggle("stale", !!(fut && state.futureStale));
-    if (!fut || !fut.steps || !fut.steps.length) {
-      flow.append(el("div", "placeholder", "When you've described the whole process, press “Design the better process”. The redesign appears here with each step marked AI, human, or physical."));
+  /* ---------- Rendering ---------- */
+  function renderTranscript() {
+    const box = $("transcript");
+    box.replaceChildren();
+    if (!state.lines.length) {
+      box.append(el("p", "empty", "Start with what kicks it off. For example: “A customer emails us a return request.”"));
       return;
     }
-    head.textContent = fut.headline || "";
-    const count = { ai: 0, human: 0, physical: 0 };
-    fut.steps.forEach((s) => { count[normMode(s.mode)]++; });
-    const curSteps = state.current?.steps?.length || 0;
-    stats.append(
-      stat(curSteps ? `${curSteps}→${fut.steps.length}` : fut.steps.length, "steps"),
-      stat(count.ai, "AI / automated"),
-      stat(count.human, "human"),
-      stat(count.physical, "physical")
-    );
-    if (fut.cycleBefore || fut.cycleAfter) stats.append(stat(fut.cycleAfter || "?", `estimated cycle time (was ${fut.cycleBefore || "?"})`, "wide"));
+    state.lines.forEach((text, i) => {
+      const li = el("li");
+      const x = el("button", "x", "×");
+      x.type = "button";
+      x.title = "Remove";
+      x.setAttribute("aria-label", `Remove line ${i + 1}`);
+      x.onclick = () => { state.lines.splice(i, 1); changed(); };
+      li.append(el("span", "n", String(i + 1)), el("span", "", text), x);
+      box.append(li);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
 
-    fut.steps.forEach((s, i) => {
-      const wrap = el("div", "node-wrap");
-      if (i) wrap.append(arrow());
-      const mode = normMode(s.mode);
-      const n = el("div", `node mode-${mode}${s.kind === "decision" ? " decision" : ""}`);
+  function branchText(s) {
+    if (!Array.isArray(s.branches) || !s.branches.length) return "";
+    return s.branches.map((b) => `${b.label}: go to step ${b.to}`).join(" · ");
+  }
+
+  // Groups consecutive steps that share a key into one lane segment.
+  function timeline(steps, keyOf, headOf, detailOf) {
+    const tl = el("div", "timeline");
+    let group = null, groupKey = null;
+    steps.forEach((s, i) => {
+      const k = keyOf(s);
+      if (!group || k !== groupKey) {
+        if (group) tl.append(el("div", "handoff", "↓ passes to"));
+        const head = headOf(s);
+        group = el("section", "group");
+        group.style.setProperty("--c", head.color);
+        const h = el("div", "group-head");
+        h.append(el("span", "dot"), el("span", "", head.name));
+        if (head.sub) h.append(el("span", "sub", head.sub));
+        group.append(h, el("ol", "steps"));
+        tl.append(group);
+        groupKey = k;
+      }
+      const li = el("li", "step" + (s.kind === "decision" ? " decision" : ""));
       const num = el("div", "num"); num.append(el("span", "", String(s.id ?? i + 1)));
       const body = el("div");
-      body.append(el("div", "label", s.label));
-      const meta = el("div", "meta");
-      meta.append(el("span", "modebadge", MODE_LABEL[mode]));
-      if (s.owner) meta.append(el("span", "tag role", s.owner));
-      if (Array.isArray(s.replaces) && s.replaces.length) meta.append(el("span", "tag", "replaces " + s.replaces.join(", ")));
-      body.append(meta);
-      if (Array.isArray(s.branches) && s.branches.length) {
-        const b = el("div", "branches");
-        s.branches.forEach((br) => b.append(el("span", "branch", `${br.label} → ${br.to}`)));
-        body.append(b);
-      }
-      if (s.note) body.append(el("p", "note", s.note));
-      n.append(num, body);
-      wrap.append(n);
-      flow.append(wrap);
+      body.append(el("div", "text", s.label));
+      for (const d of detailOf(s)) if (d.text) body.append(el("div", d.cls, d.text));
+      li.append(num, body);
+      group.lastChild.append(li);
     });
+    return tl;
+  }
+
+  function renderToday(view) {
+    const cur = state.current;
+    if (!cur || !cur.steps || !cur.steps.length) {
+      view.append(el("div", "placeholder", "Your process will be drawn here as you describe it."));
+      return;
+    }
+    const steps = cur.steps;
+    const roles = new Set(steps.map((s) => (s.role || "Unassigned").toLowerCase()));
+    let hand = 0;
+    for (let i = 1; i < steps.length; i++) if ((steps[i].role || "").toLowerCase() !== (steps[i - 1].role || "").toLowerCase()) hand++;
+    const pains = steps.filter((s) => s.pain).length;
+    const p = el("p", "summary");
+    p.innerHTML = `<b>${steps.length}</b> steps across <b>${roles.size}</b> ${roles.size === 1 ? "person or team" : "people or teams"}, with <b>${hand}</b> hand-off${hand === 1 ? "" : "s"}` +
+      (pains ? ` and <b>${pains}</b> problem spot${pains === 1 ? "" : "s"}.` : ".");
+    view.append(p);
+    view.append(timeline(
+      steps,
+      (s) => (s.role || "Unassigned").toLowerCase(),
+      (s) => ({ name: s.role || "Unassigned", color: roleColor(s.role) }),
+      (s) => [
+        { cls: "detail", text: s.kind === "decision" ? ["Decision", branchText(s)].filter(Boolean).join(" · ") : s.kind === "wait" ? "Waiting" : "" },
+        { cls: "pain", text: s.pain ? "⚠ " + s.pain : "" }
+      ]
+    ));
+  }
+
+  function renderBetter(view) {
+    const fut = state.future;
+    if (!fut || !fut.steps || !fut.steps.length) {
+      const ph = el("div", "placeholder", state.lines.length
+        ? "When you've described the whole process, press “Design a better process”."
+        : "Describe your process first, then press “Design a better process”.");
+      view.append(ph);
+      return;
+    }
+    if (fut.headline) view.append(el("p", "summary", fut.headline));
+
+    const count = { ai: 0, human: 0, physical: 0 };
+    fut.steps.forEach((s) => count[normMode(s.mode)]++);
+    const mix = el("div", "mixbar");
+    const bar = el("div", "bar");
+    const leg = el("div", "mixlegend");
+    for (const k of ["ai", "human", "physical"]) {
+      if (!count[k]) continue;
+      const seg = el("span"); seg.style.setProperty("--c", MODE[k].c); seg.style.flex = String(count[k]); bar.append(seg);
+      const l = el("span"); l.style.setProperty("--c", MODE[k].c);
+      l.append(el("b", "", String(count[k])), document.createTextNode(" " + MODE[k].short));
+      leg.append(l);
+    }
+    mix.append(bar, leg);
+    view.append(mix);
+
+    const curN = state.current?.steps?.length;
+    const facts = [];
+    if (curN) facts.push(`<b>${curN} → ${fut.steps.length}</b> steps`);
+    if (fut.cycleBefore || fut.cycleAfter) facts.push(`time: <b>${esc(fut.cycleAfter || "?")}</b>, down from ${esc(fut.cycleBefore || "?")}`);
+    if (facts.length) { const f = el("p", "summary"); f.innerHTML = facts.join(" · "); view.append(f); }
+
+    view.append(timeline(
+      fut.steps,
+      (s) => normMode(s.mode),
+      (s) => ({ name: MODE[normMode(s.mode)].name, color: MODE[normMode(s.mode)].c }),
+      (s) => [
+        { cls: "detail", text: [s.owner, s.kind === "decision" ? branchText(s) || "Decision" : "", Array.isArray(s.replaces) && s.replaces.length ? `replaces today's step ${s.replaces.join(", ")}` : ""].filter(Boolean).join(" · ") },
+        { cls: "detail", text: s.note || "" }
+      ]
+    ));
 
     if (Array.isArray(fut.removed) && fut.removed.length) {
-      removed.append(el("h3", "", "Removed or absorbed"));
+      const d = el("details", "removed");
+      d.append(el("summary", "", `What was cut (${fut.removed.length})`));
       const ul = el("ul");
-      fut.removed.forEach((r) => ul.append(el("li", "", `${r.label}: ${r.reason}`)));
-      removed.append(ul);
+      fut.removed.forEach((r) => { const li = el("li"); li.append(el("b", "", r.label + ": "), document.createTextNode(r.reason || "")); ul.append(li); });
+      d.append(ul);
+      view.append(d);
     }
   }
 
-  function render() {
-    $("procTitle").value = state.title || "";
-    $("exampleFlag").hidden = !state.example;
-    renderTranscript();
-    renderCurrent();
-    renderFuture();
-    $("designBtn").disabled = !state.lines.length || busy.fut;
-    $("redrawBtn").disabled = !state.lines.length || busy.cur || !sample;
-    $("redrawBtn").hidden = !sample;
-    if (!busy.fut) setStatus("futStatus", state.future && state.futureStale ? "Your description changed since this was designed. Press “Design the better process” to refresh it." : "");
-  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
-  function setStatus(id, text, opts = {}) {
-    const s = $(id);
+  function renderStatus() {
+    const s = $("status");
     s.replaceChildren();
-    s.classList.toggle("err", !!opts.err);
-    if (opts.busy) s.append(el("span", "spin"));
+    let { text, busy: b, err } = statusMsg;
+    if (!text && state.view === "better" && state.future && state.futureStale && !busy.fut) {
+      text = "Out of date. Press “Design a better process” to refresh.";
+    }
+    s.classList.toggle("err", !!err);
+    if (b) s.append(el("span", "spin"));
     if (text) s.append(el("span", "", text));
   }
 
+  function render() {
+    if (document.activeElement !== $("procTitle")) $("procTitle").value = state.title || "";
+    $("exampleNote").hidden = !state.example;
+    renderTranscript();
+    const today = state.view !== "better";
+    $("tabToday").setAttribute("aria-selected", String(today));
+    $("tabBetter").setAttribute("aria-selected", String(!today));
+    $("countToday").textContent = state.current?.steps?.length ? String(state.current.steps.length) : "";
+    $("countBetter").textContent = state.future?.steps?.length ? String(state.future.steps.length) : "";
+    const view = $("view");
+    view.replaceChildren();
+    view.style.display = "grid";
+    view.style.gap = "20px";
+    view.style.opacity = !today && state.futureStale ? ".6" : "1";
+    today ? renderToday(view) : renderBetter(view);
+    $("designBtn").disabled = !state.lines.length || busy.fut;
+    $("designBtn").textContent = busy.fut ? "Designing…" : state.future && !state.example ? "Redesign again" : "Design a better process";
+    renderStatus();
+  }
+
+  function setStatus(text, opts = {}) {
+    statusMsg = { text, busy: !!opts.busy, err: !!opts.err };
+    renderStatus();
+  }
+
+  const MODE_LABEL = { ai: "AI", human: "Human", physical: "Physical" };
   /* ---------- Claude calls ---------- */
   function narration() {
     return state.lines.map((l, i) => `${i + 1}. ${l}`).join("\n").slice(-20000);
@@ -542,44 +539,42 @@ Reply with only JSON:
   function errCopy(e) {
     switch (e && e.code) {
       case "not_granted": case "sampling_disabled": case "not_declared": case "capability_disabled": case "capability_removed":
-        return "Claude isn't available on this page, so the map uses a quick sentence-by-sentence draft.";
-      case "rate_limited": return "Too many requests right now. Wait a minute, then press Redraw.";
-      case "session_expired": return "Sign in to Claude again, then press Redraw.";
-      case "invalid_json": return "Claude's answer came back malformed. Press the button again to retry.";
+        return "Claude isn't available on this page, so the map is a rough one-step-per-sentence draft.";
+      case "rate_limited": return "Too many requests right now. Wait a minute, then add your next line.";
+      case "session_expired": return "Sign in to Claude again, then try again.";
+      case "invalid_json": return "Claude's answer came back malformed. Try again.";
       case "prompt_too_large": return "The description is too long to process at once. Remove a few lines and try again.";
       case "refused": return "Claude declined this description. Rephrase it and try again.";
-      default: return "Couldn't reach Claude. Press the button again to retry.";
+      default: return "Couldn't reach Claude. Try again.";
     }
   }
   const PERMANENT = new Set(["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"]);
 
   async function mapCurrent() {
-    if (!state.lines.length) return;
+    if (!state.lines.length) { state.current = null; save(); render(); return; }
     if (!sample) {
       state.current = localParse(state.lines);
-      setStatus("curStatus", "Quick draft: one step per sentence. Claude-powered mapping runs when this page is opened in Claude.");
       save(); render();
       return;
     }
     curCtl?.abort();
     const ctl = curCtl = new AbortController();
     busy.cur = true;
-    // Instant preview while Claude works, if we have nothing yet
-    if (!state.current || state.current.draft || state.example) state.current = localParse(state.lines);
+    if (!state.current || state.current.draft) state.current = localParse(state.lines);
     render();
-    setStatus("curStatus", "Mapping what you've said…", { busy: true });
+    setStatus("Updating the map…", { busy: true });
     try {
       const res = await sample.json(CURRENT_PROMPT(state.title, narration()), { signal: ctl.signal, modelTier: "quick" });
       if (ctl !== curCtl) return;
       if (!res || !Array.isArray(res.steps)) throw { code: "invalid_json" };
       state.current = { steps: res.steps.filter((s) => s && s.label) };
       if (state.future) state.futureStale = true;
-      setStatus("curStatus", "");
+      setStatus("");
     } catch (e) {
       if (e && e.code === "cancelled") return;
       if (PERMANENT.has(e && e.code)) sample = null;
-      state.current = state.current && !state.current.draft ? state.current : localParse(state.lines);
-      setStatus("curStatus", errCopy(e), { err: true });
+      if (!state.current) state.current = localParse(state.lines);
+      setStatus(errCopy(e), { err: true });
     } finally {
       if (ctl === curCtl) { busy.cur = false; save(); render(); }
     }
@@ -587,39 +582,35 @@ Reply with only JSON:
 
   async function designFuture() {
     if (!state.lines.length) return;
+    state.view = "better";
     if (!sample) {
-      setStatus("futStatus", "The redesign needs Claude. Open this page in Claude (claude.ai) and allow it to use Claude when asked.", { err: true });
+      render();
+      setStatus("The redesign needs Claude. Open this page on claude.ai and allow it when asked.", { err: true });
       return;
     }
     futCtl?.abort();
     const ctl = futCtl = new AbortController();
     busy.fut = true;
     render();
-    setStatus("futStatus", "Redesigning the process. This usually takes 20–60 seconds…", { busy: true });
     try {
-      // Make sure the current map reflects the latest narration first.
       if (!state.current || state.current.draft || busy.cur) {
-        setStatus("futStatus", "Finishing the current-state map first…", { busy: true });
+        setStatus("Finishing today's map first…", { busy: true });
         await mapCurrent();
-        setStatus("futStatus", "Redesigning the process. This usually takes 20–60 seconds…", { busy: true });
       }
+      setStatus("Designing a better process. This takes about 20–60 seconds.", { busy: true });
       const res = await sample.json(FUTURE_PROMPT(state.title, narration(), state.current), { signal: ctl.signal, cache: false });
       if (ctl !== futCtl) return;
       if (!res || !Array.isArray(res.steps)) throw { code: "invalid_json" };
       state.future = res;
       state.futureStale = false;
-      setStatus("futStatus", "");
+      setStatus("");
     } catch (e) {
       if (e && e.code === "cancelled") return;
       if (PERMANENT.has(e && e.code)) sample = null;
-      busy.fut = false;
-      render();
-      setStatus("futStatus", errCopy(e), { err: true });
-      return;
+      setStatus(errCopy(e), { err: true });
     } finally {
-      if (ctl === futCtl) { busy.fut = false; save(); }
+      if (ctl === futCtl) { busy.fut = false; save(); render(); }
     }
-    render();
   }
 
   /* ---------- Mermaid export ---------- */
@@ -662,15 +653,24 @@ Reply with only JSON:
   }
 
   /* ---------- Events ---------- */
+  function blank() { return { title: "", lines: [], current: null, future: null, roleOrder: [], view: "today" }; }
   function clearExample() {
     if (!state.example) return;
-    state = { title: state.title === EXAMPLE.title ? "" : state.title, lines: [], current: null, future: null, roleOrder: [] };
+    state = blank();
   }
   function changed() {
     if (state.future) state.futureStale = true;
+    state.view = "today";
     save();
     render();
     mapCurrent();
+  }
+  function reset() {
+    curCtl?.abort(); futCtl?.abort(); busy.cur = busy.fut = false;
+    state = blank();
+    $("confirmNew").hidden = true;
+    setStatus("");
+    save(); render(); $("procTitle").focus();
   }
 
   $("composer").addEventListener("submit", (e) => {
@@ -685,20 +685,20 @@ Reply with only JSON:
   $("say").addEventListener("keydown", (e) => {
     if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("composer").requestSubmit(); }
   });
-  $("procTitle").addEventListener("input", (e) => { state.title = e.target.value; save(); });
+  $("procTitle").addEventListener("input", (e) => {
+    if (state.example) { const t = e.target.value; state = blank(); state.title = t; render(); }
+    state.title = e.target.value; save();
+  });
   $("designBtn").onclick = designFuture;
-  $("redrawBtn").onclick = mapCurrent;
-  $("newBtn").onclick = () => { $("confirmNew").hidden = false; $("confirmYes").focus(); };
+  $("tabToday").onclick = () => { state.view = "today"; save(); render(); };
+  $("tabBetter").onclick = () => { state.view = "better"; save(); render(); };
+  $("startOwn").onclick = reset;
+  $("newBtn").onclick = () => { if (state.example || !state.lines.length) { reset(); return; } $("confirmNew").hidden = false; $("confirmYes").focus(); };
   $("confirmNo").onclick = () => { $("confirmNew").hidden = true; };
-  $("confirmYes").onclick = () => {
-    curCtl?.abort(); futCtl?.abort(); busy.cur = busy.fut = false;
-    state = { title: "", lines: [], current: null, future: null, roleOrder: [] };
-    $("confirmNew").hidden = true;
-    ["curStatus", "futStatus"].forEach((id) => setStatus(id, ""));
-    save(); render(); $("procTitle").focus();
-  };
-  $("copyCur").onclick = (e) => copyText(e.currentTarget, toMermaid(state.current?.steps, "role"));
-  $("copyFut").onclick = (e) => copyText(e.currentTarget, toMermaid(state.future?.steps, "mode"));
+  $("confirmYes").onclick = reset;
+  $("copyBtn").onclick = (e) => state.view === "better"
+    ? copyText(e.currentTarget, toMermaid(state.future?.steps, "mode"))
+    : copyText(e.currentTarget, toMermaid(state.current?.steps, "role"));
 
   render();
 
