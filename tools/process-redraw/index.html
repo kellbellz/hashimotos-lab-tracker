@@ -1,0 +1,709 @@
+<title>Process Redraw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root {
+  --bg: #eef2f4;
+  --panel: #ffffff;
+  --panel-2: #f6f8f9;
+  --ink: #16212b;
+  --ink-2: #4b5a67;
+  --ink-3: #7b8994;
+  --line: #d5dde2;
+  --accent: #1d5f7a;
+  --accent-ink: #ffffff;
+  --warn: #b4481f;
+  --warn-bg: #fbe9e1;
+  --ai: #6a4ee0;
+  --ai-bg: #efebfd;
+  --human: #c47a0c;
+  --human-bg: #fcf1dd;
+  --phys: #2c8356;
+  --phys-bg: #e2f3e9;
+  --r1: #2e6fd8; --r2: #cf4a45; --r3: #23907f; --r4: #b8740a;
+  --r5: #8653d0; --r6: #cc4f93; --r7: #5b8a2d; --r8: #52606d;
+  --tint: 13%;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1519; --panel: #172026; --panel-2: #1d272e; --ink: #e6edf1; --ink-2: #aab8c2; --ink-3: #7d8c97;
+    --line: #2b3841; --accent: #5fb0d0; --accent-ink: #0b1216; --warn: #f08a62; --warn-bg: #3a2119;
+    --ai: #a896ff; --ai-bg: #262045; --human: #f0b04c; --human-bg: #3a2c14; --phys: #5cc68e; --phys-bg: #173325;
+    --r1: #6ea2ff; --r2: #ff7f7a; --r3: #4fd0bd; --r4: #e8a93c; --r5: #b58cff; --r6: #f47fbd; --r7: #97c85f; --r8: #9aa9b6;
+    --tint: 20%;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1519; --panel: #172026; --panel-2: #1d272e; --ink: #e6edf1; --ink-2: #aab8c2; --ink-3: #7d8c97;
+  --line: #2b3841; --accent: #5fb0d0; --accent-ink: #0b1216; --warn: #f08a62; --warn-bg: #3a2119;
+  --ai: #a896ff; --ai-bg: #262045; --human: #f0b04c; --human-bg: #3a2c14; --phys: #5cc68e; --phys-bg: #173325;
+  --r1: #6ea2ff; --r2: #ff7f7a; --r3: #4fd0bd; --r4: #e8a93c; --r5: #b58cff; --r6: #f47fbd; --r7: #97c85f; --r8: #9aa9b6;
+  --tint: 20%;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 var(--body); padding-inline: 16px; padding-block: 20px 40px; }
+.wrap { max-width: 1480px; margin: 0 auto; display: grid; gap: 18px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+header.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 12px; }
+header.top h1 { font-size: 30px; line-height: 1.1; }
+header.top p { margin: 4px 0 0; color: var(--ink-2); max-width: 70ch; }
+.top-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.btn { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 7px 12px; font-size: 14px; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn:disabled { opacity: .5; cursor: default; }
+.btn.small { padding: 4px 9px; font-size: 13px; }
+
+.grid { display: grid; grid-template-columns: minmax(280px, 340px) minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 1180px) { .grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } .narrate { grid-column: 1 / -1; } }
+@media (max-width: 760px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 14px; min-width: 0; }
+.panel-head { display: flex; justify-content: space-between; align-items: start; gap: 10px; flex-wrap: wrap; }
+.panel-head h2 { font-size: 20px; }
+.eyebrow { font: 500 11px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 6px; }
+.status { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; min-height: 20px; }
+.status.err { color: var(--warn); }
+.spin { width: 12px; height: 12px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* Narration */
+.narrate { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px); }
+@media (max-width: 1180px) { .narrate { position: static; } }
+.title-input { width: 100%; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: 600 15px var(--body); }
+.transcript { display: grid; gap: 6px; max-height: 44vh; overflow-y: auto; padding-right: 2px; counter-reset: line; }
+.line { display: grid; grid-template-columns: 22px 1fr auto; gap: 8px; align-items: start; background: var(--panel-2); border-radius: 8px; padding: 7px 8px; font-size: 14px; }
+.line .n { font: 500 11px/20px var(--mono); color: var(--ink-3); }
+.line .x { border: 0; background: none; color: var(--ink-3); padding: 0 4px; font-size: 16px; line-height: 20px; }
+.line .x:hover { color: var(--warn); }
+.empty { color: var(--ink-3); font-size: 14px; }
+.composer { display: grid; gap: 8px; }
+.composer textarea { width: 100%; min-height: 84px; resize: vertical; border: 1px solid var(--line); background: var(--panel-2); color: var(--ink); border-radius: 10px; padding: 10px 12px; font: 15px/1.45 var(--body); }
+.composer-row { display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+.hint { font-size: 12.5px; color: var(--ink-3); }
+.done-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* Legends */
+.legend { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 2px 9px 2px 7px; font-size: 12.5px; font-weight: 500; background: color-mix(in srgb, var(--c) var(--tint), var(--panel)); color: var(--ink); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); white-space: nowrap; }
+.chip::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+
+/* Stats */
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; }
+.stat { background: var(--panel-2); border-radius: 8px; padding: 8px 10px; }
+.stat b { display: block; font: 700 20px/1.1 var(--display); font-variant-numeric: tabular-nums; }
+.stat.wide { grid-column: 1 / -1; }
+.stat.wide b { font-size: 16px; }
+.stat span { font-size: 12px; color: var(--ink-2); }
+.headline { font-size: 14px; color: var(--ink-2); margin: 0; }
+
+/* Flow */
+.flow-scroll { overflow-x: auto; }
+.flow { display: grid; gap: 0; min-width: 260px; }
+.node-wrap { display: grid; justify-items: stretch; }
+.arrow { justify-self: center; width: 2px; height: 18px; background: var(--line); position: relative; }
+.arrow::after { content: ""; position: absolute; left: -4px; bottom: -1px; border: 5px solid transparent; border-top-color: var(--ink-3); border-bottom: 0; }
+.node { --c: var(--r8); position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 8px; padding: 10px 12px 10px 10px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--c) 50%, transparent); background: color-mix(in srgb, var(--c) var(--tint), var(--panel)); }
+.node .num { font: 500 12px/1 var(--mono); color: var(--panel); background: var(--c); border-radius: 6px; height: 24px; display: grid; place-items: center; }
+.node.decision .num { transform: rotate(45deg) scale(.82); border-radius: 3px; }
+.node.decision .num span { transform: rotate(-45deg); }
+.node.wait { border-style: dashed; }
+.node .label { font-weight: 500; font-size: 14.5px; line-height: 1.35; overflow-wrap: anywhere; }
+.node .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+.tag { font-size: 11.5px; border-radius: 5px; padding: 1px 7px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-2); }
+.tag.role { color: var(--ink); font-weight: 600; border-color: color-mix(in srgb, var(--c) 55%, transparent); }
+.tag.pain { background: var(--warn-bg); color: var(--warn); border-color: transparent; }
+.tag.kind { font-family: var(--mono); text-transform: uppercase; letter-spacing: .05em; font-size: 10.5px; }
+.branches { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.branch { font: 500 11.5px var(--mono); padding: 1px 7px; border-radius: 5px; background: var(--panel); border: 1px solid var(--line); color: var(--ink-2); }
+.node .note { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); }
+.mode-ai { --c: var(--ai); }
+.mode-human { --c: var(--human); }
+.mode-physical { --c: var(--phys); }
+.modebadge { font: 600 10.5px/1 var(--mono); letter-spacing: .06em; text-transform: uppercase; padding: 4px 7px; border-radius: 5px; background: var(--c); color: var(--panel); }
+.panel.stale .flow { opacity: .55; }
+.removed { display: grid; gap: 6px; }
+.removed h3 { font-size: 14px; }
+.removed ul { margin: 0; padding-left: 18px; font-size: 13.5px; color: var(--ink-2); display: grid; gap: 4px; }
+.placeholder { border: 1px dashed var(--line); border-radius: 10px; padding: 18px; color: var(--ink-3); font-size: 14px; text-align: center; }
+.example-flag { font: 500 11px var(--mono); text-transform: uppercase; letter-spacing: .06em; background: var(--human-bg); color: var(--human); padding: 3px 8px; border-radius: 5px; }
+
+.confirm { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13.5px; background: var(--warn-bg); color: var(--ink); padding: 8px 10px; border-radius: 8px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Process Redraw</h1>
+      <p>Describe how a process works today, one sentence at a time. The current-state map is drawn as you go, color-coded by who owns each step. When you finish, Claude redesigns it and marks every step as AI, human, or physical work.</p>
+    </div>
+    <div class="top-actions">
+      <span class="example-flag" id="exampleFlag">Example process loaded</span>
+      <button class="btn" id="newBtn" type="button">Start a new process</button>
+    </div>
+  </header>
+  <div class="confirm" id="confirmNew" hidden>
+    This clears the narration and both maps.
+    <button class="btn small primary" id="confirmYes" type="button">Clear and start over</button>
+    <button class="btn small" id="confirmNo" type="button">Keep it</button>
+  </div>
+
+  <div class="grid">
+    <section class="panel narrate" aria-labelledby="narrateH">
+      <div>
+        <div class="eyebrow">Step 1 · Tell it</div>
+        <h2 id="narrateH">Describe the process</h2>
+      </div>
+      <input class="title-input" id="procTitle" type="text" placeholder="Process name, e.g. New hire onboarding" aria-label="Process name">
+      <div class="transcript" id="transcript" aria-live="polite"></div>
+      <form class="composer" id="composer">
+        <textarea id="say" placeholder="What happens next, and who does it? e.g. “Then the manager emails HR to approve the offer.”" aria-label="Describe the next part of the process"></textarea>
+        <div class="composer-row">
+          <span class="hint">Enter adds it · Shift+Enter for a new line · Use your keyboard's mic key to dictate</span>
+          <button class="btn primary" type="submit">Add</button>
+        </div>
+      </form>
+      <div class="done-row">
+        <button class="btn primary" id="designBtn" type="button">Design the better process</button>
+        <button class="btn" id="redrawBtn" type="button">Redraw current map</button>
+      </div>
+      <div class="status" id="aiStatus"></div>
+    </section>
+
+    <section class="panel" id="currentPanel" aria-labelledby="curH">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow">Step 2 · Today</div>
+          <h2 id="curH">Current process</h2>
+        </div>
+        <button class="btn small" id="copyCur" type="button">Copy as Mermaid</button>
+      </div>
+      <div class="status" id="curStatus"></div>
+      <div class="legend" id="curLegend" aria-label="Responsible parties"></div>
+      <div class="stats" id="curStats"></div>
+      <div class="flow-scroll"><div class="flow" id="curFlow"></div></div>
+    </section>
+
+    <section class="panel" id="futurePanel" aria-labelledby="futH">
+      <div class="panel-head">
+        <div>
+          <div class="eyebrow">Step 3 · Redesigned</div>
+          <h2 id="futH">Suggested process</h2>
+        </div>
+        <button class="btn small" id="copyFut" type="button">Copy as Mermaid</button>
+      </div>
+      <div class="status" id="futStatus"></div>
+      <div class="legend">
+        <span class="chip mode-ai">AI / automated</span>
+        <span class="chip mode-human">Human decision or action</span>
+        <span class="chip mode-physical">Physical step</span>
+      </div>
+      <p class="headline" id="futHeadline"></p>
+      <div class="stats" id="futStats"></div>
+      <div class="flow-scroll"><div class="flow" id="futFlow"></div></div>
+      <div class="removed" id="futRemoved"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const STORE = "process-redraw-v1";
+  const ROLE_VARS = ["--r1","--r2","--r3","--r4","--r5","--r6","--r7","--r8"];
+
+  const EXAMPLE = {
+    example: true,
+    title: "Thyroid lab results follow-up",
+    lines: [
+      "When lab results come back from LabCorp, they arrive by fax at the front desk.",
+      "The front desk scans the fax and uploads it into the patient's chart.",
+      "Then the front desk leaves a paper note in the nurse's inbox.",
+      "The nurse pulls the chart and checks whether TSH, Free T4 or TPO antibodies are out of range.",
+      "If something is abnormal the nurse flags it for the doctor, which usually takes 2-3 days to get looked at.",
+      "The doctor reviews the results and decides whether to change the levothyroxine dose.",
+      "The nurse calls the patient to explain the results, and there's often phone tag for a few days.",
+      "If the dose changes, the nurse faxes the new prescription to the pharmacy.",
+      "The patient picks up the prescription and calls to book a recheck blood draw in 6 weeks."
+    ],
+    current: {
+      steps: [
+        { id: 1, label: "Lab results arrive by fax", role: "Front desk", kind: "task" },
+        { id: 2, label: "Scan fax and upload to patient chart", role: "Front desk", kind: "task", pain: "Manual re-keying" },
+        { id: 3, label: "Leave paper note in nurse's inbox", role: "Front desk", kind: "handoff", pain: "Paper handoff" },
+        { id: 4, label: "Pull chart and check TSH, Free T4, TPO against ranges", role: "Nurse", kind: "task" },
+        { id: 5, label: "Abnormal result?", role: "Nurse", kind: "decision", branches: [{ label: "Yes", to: 6 }, { label: "No", to: 8 }] },
+        { id: 6, label: "Flag for doctor and wait for review", role: "Nurse", kind: "wait", pain: "2–3 day queue" },
+        { id: 7, label: "Review results and decide on levothyroxine dose", role: "Doctor", kind: "decision" },
+        { id: 8, label: "Call patient to explain results", role: "Nurse", kind: "task", pain: "Phone tag" },
+        { id: 9, label: "Fax new prescription to pharmacy (if dose changed)", role: "Nurse", kind: "handoff", pain: "Fax" },
+        { id: 10, label: "Pick up prescription", role: "Patient", kind: "task" },
+        { id: 11, label: "Call to book 6-week recheck draw", role: "Patient", kind: "task", pain: "Relies on patient memory" }
+      ]
+    },
+    future: {
+      headline: "Results flow in electronically, AI screens and drafts, and the doctor makes one decision on one screen. Staff touch the case only when it needs judgment.",
+      cycleBefore: "4–7 days", cycleAfter: "Same day to 1 day",
+      steps: [
+        { id: 1, label: "Results arrive through the LabCorp electronic interface straight into the chart", owner: "System", mode: "ai", replaces: [1, 2, 3] },
+        { id: 2, label: "AI compares TSH, Free T4, TPO to ranges and to the patient's own trend, then drafts a summary", owner: "AI assistant", mode: "ai", replaces: [4] },
+        { id: 3, label: "Needs a clinical decision?", owner: "AI assistant", mode: "ai", kind: "decision", replaces: [5], branches: [{ label: "No", to: 4 }, { label: "Yes", to: 5 }] },
+        { id: 4, label: "Release normal results to the portal with a plain-language explanation", owner: "AI assistant", mode: "ai", replaces: [8] },
+        { id: 5, label: "Review the AI summary and trend, approve or change dose, e-prescribe in the same screen", owner: "Doctor", mode: "human", replaces: [6, 7, 9], note: "Arrives in a same-day priority queue instead of a paper flag." },
+        { id: 6, label: "Message patient with the decision and next steps; nurse calls only if the patient asks", owner: "AI assistant", mode: "ai", replaces: [8] },
+        { id: 7, label: "Auto-order the 6-week recheck and send booking reminders", owner: "System", mode: "ai", replaces: [11] },
+        { id: 8, label: "Pick up prescription at pharmacy", owner: "Patient", mode: "physical", replaces: [10] },
+        { id: 9, label: "Blood draw for recheck", owner: "Patient + lab", mode: "physical" }
+      ],
+      removed: [
+        { label: "Fax scanning and paper notes", reason: "Electronic results feed replaces both." },
+        { label: "Phone tag", reason: "Portal/SMS message with a call-back option." }
+      ]
+    }
+  };
+
+  let state = load() || structuredClone(EXAMPLE);
+  let sample = null;
+  let curCtl = null;
+  let futCtl = null;
+  const busy = { cur: false, fut: false };
+
+  function load() {
+    try { const raw = localStorage.getItem(STORE); return raw ? JSON.parse(raw) : null; } catch { return null; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
+  }
+  function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text != null) n.textContent = text;
+    return n;
+  }
+
+  /* ---------- Role colors: stable per role name ---------- */
+  function roleColor(role) {
+    state.roleOrder = state.roleOrder || [];
+    const key = (role || "Unassigned").trim().toLowerCase();
+    let i = state.roleOrder.indexOf(key);
+    if (i === -1) { state.roleOrder.push(key); i = state.roleOrder.length - 1; }
+    return `var(${ROLE_VARS[i % ROLE_VARS.length]})`;
+  }
+
+  /* ---------- Local quick parse (used when Claude is unavailable, and as instant preview) ---------- */
+  const PRONOUNS = /^(i|we|you|they|he|she|it|this|that|there|someone|somebody)$/i;
+  function localParse(lines) {
+    const steps = [];
+    let lastRole = "Unassigned";
+    lines.forEach((raw) => {
+      raw.split(/(?<=[.!?])\s+/).forEach((s) => {
+        let t = s.trim().replace(/[.!?]+$/, "");
+        if (!t) return;
+        t = t.replace(/^(then|next|after that|afterwards|finally|first|and|so|once that'?s done),?\s+/i, "");
+        const m = t.match(/^(?:the\s+|our\s+|a\s+)?([A-Za-z][\w-]*(?:\s[a-z][\w-]*)?)\s+(?:will\s+|then\s+|usually\s+|always\s+)?([a-z]+s)\b/);
+        let role = lastRole;
+        if (m) {
+          const cand = m[1];
+          if (/^i$/i.test(cand)) role = "Me";
+          else if (/^we$/i.test(cand)) role = "Our team";
+          else if (!PRONOUNS.test(cand)) role = cand.replace(/\b\w/g, (c) => c.toUpperCase());
+        } else if (/^i\s/i.test(t)) role = "Me";
+        lastRole = role;
+        const kind = /\b(if|whether|decide|approve|approves|check if)\b/i.test(t) ? "decision"
+          : /\b(wait|waits|until|days|weeks|queue)\b/i.test(t) ? "wait"
+          : /\b(send|sends|email|emails|fax|faxes|hand|hands|forward|forwards|pass|passes)\b/i.test(t) ? "handoff" : "task";
+        steps.push({ id: steps.length + 1, label: t.charAt(0).toUpperCase() + t.slice(1), role, kind });
+      });
+    });
+    return { steps, draft: true };
+  }
+
+  /* ---------- Rendering ---------- */
+  function renderTranscript() {
+    const box = $("transcript");
+    box.replaceChildren();
+    if (!state.lines.length) {
+      box.append(el("div", "empty", "Nothing yet. Start with the trigger: what kicks this process off, and who is involved?"));
+      return;
+    }
+    state.lines.forEach((text, i) => {
+      const row = el("div", "line");
+      row.append(el("span", "n", String(i + 1).padStart(2, "0")), el("span", "", text));
+      const x = el("button", "x", "×");
+      x.type = "button";
+      x.setAttribute("aria-label", `Remove line ${i + 1}`);
+      x.onclick = () => { state.lines.splice(i, 1); changed(); };
+      row.append(x);
+      box.append(row);
+    });
+    box.scrollTop = box.scrollHeight;
+  }
+
+  function arrow() { return el("div", "arrow"); }
+
+  function handoffs(steps, key) {
+    let n = 0;
+    for (let i = 1; i < steps.length; i++) {
+      if ((steps[i][key] || "").toLowerCase() !== (steps[i - 1][key] || "").toLowerCase()) n++;
+    }
+    return n;
+  }
+
+  function stat(val, label, cls = "") {
+    const s = el("div", ("stat " + cls).trim());
+    s.append(el("b", "", String(val)), el("span", "", label));
+    return s;
+  }
+
+  function renderCurrent() {
+    const flow = $("curFlow"), legend = $("curLegend"), stats = $("curStats");
+    flow.replaceChildren(); legend.replaceChildren(); stats.replaceChildren();
+    const cur = state.current;
+    if (!cur || !cur.steps || !cur.steps.length) {
+      flow.append(el("div", "placeholder", "Your current process appears here as you describe it."));
+      return;
+    }
+    const roles = [];
+    cur.steps.forEach((s) => { if (!roles.some((r) => r.toLowerCase() === (s.role || "").toLowerCase())) roles.push(s.role || "Unassigned"); });
+    roles.forEach((r) => { const c = el("span", "chip", r); c.style.setProperty("--c", roleColor(r)); legend.append(c); });
+
+    const pains = cur.steps.filter((s) => s.pain).length;
+    stats.append(stat(cur.steps.length, "steps"), stat(roles.length, "people / teams"), stat(handoffs(cur.steps, "role"), "handoffs"), stat(pains, "pain points"));
+
+    cur.steps.forEach((s, i) => {
+      const wrap = el("div", "node-wrap");
+      if (i) wrap.append(arrow());
+      const kind = s.kind || "task";
+      const n = el("div", `node ${kind}`);
+      n.style.setProperty("--c", roleColor(s.role));
+      const num = el("div", "num"); num.append(el("span", "", String(s.id ?? i + 1)));
+      const body = el("div");
+      body.append(el("div", "label", s.label));
+      const meta = el("div", "meta");
+      const r = el("span", "tag role", s.role || "Unassigned");
+      meta.append(r);
+      if (kind !== "task") meta.append(el("span", "tag kind", kind));
+      if (s.pain) meta.append(el("span", "tag pain", "⚠ " + s.pain));
+      body.append(meta);
+      if (Array.isArray(s.branches) && s.branches.length) {
+        const b = el("div", "branches");
+        s.branches.forEach((br) => b.append(el("span", "branch", `${br.label} → ${br.to}`)));
+        body.append(b);
+      }
+      n.append(num, body);
+      wrap.append(n);
+      flow.append(wrap);
+    });
+  }
+
+  const MODE_LABEL = { ai: "AI", human: "Human", physical: "Physical" };
+  function normMode(m) {
+    m = String(m || "").toLowerCase();
+    if (m.startsWith("ai") || m.includes("auto")) return "ai";
+    if (m.startsWith("phys")) return "physical";
+    return "human";
+  }
+
+  function renderFuture() {
+    const flow = $("futFlow"), stats = $("futStats"), removed = $("futRemoved"), head = $("futHeadline");
+    flow.replaceChildren(); stats.replaceChildren(); removed.replaceChildren(); head.textContent = "";
+    const fut = state.future;
+    $("futurePanel").classList.toggle("stale", !!(fut && state.futureStale));
+    if (!fut || !fut.steps || !fut.steps.length) {
+      flow.append(el("div", "placeholder", "When you've described the whole process, press “Design the better process”. The redesign appears here with each step marked AI, human, or physical."));
+      return;
+    }
+    head.textContent = fut.headline || "";
+    const count = { ai: 0, human: 0, physical: 0 };
+    fut.steps.forEach((s) => { count[normMode(s.mode)]++; });
+    const curSteps = state.current?.steps?.length || 0;
+    stats.append(
+      stat(curSteps ? `${curSteps}→${fut.steps.length}` : fut.steps.length, "steps"),
+      stat(count.ai, "AI / automated"),
+      stat(count.human, "human"),
+      stat(count.physical, "physical")
+    );
+    if (fut.cycleBefore || fut.cycleAfter) stats.append(stat(fut.cycleAfter || "?", `estimated cycle time (was ${fut.cycleBefore || "?"})`, "wide"));
+
+    fut.steps.forEach((s, i) => {
+      const wrap = el("div", "node-wrap");
+      if (i) wrap.append(arrow());
+      const mode = normMode(s.mode);
+      const n = el("div", `node mode-${mode}${s.kind === "decision" ? " decision" : ""}`);
+      const num = el("div", "num"); num.append(el("span", "", String(s.id ?? i + 1)));
+      const body = el("div");
+      body.append(el("div", "label", s.label));
+      const meta = el("div", "meta");
+      meta.append(el("span", "modebadge", MODE_LABEL[mode]));
+      if (s.owner) meta.append(el("span", "tag role", s.owner));
+      if (Array.isArray(s.replaces) && s.replaces.length) meta.append(el("span", "tag", "replaces " + s.replaces.join(", ")));
+      body.append(meta);
+      if (Array.isArray(s.branches) && s.branches.length) {
+        const b = el("div", "branches");
+        s.branches.forEach((br) => b.append(el("span", "branch", `${br.label} → ${br.to}`)));
+        body.append(b);
+      }
+      if (s.note) body.append(el("p", "note", s.note));
+      n.append(num, body);
+      wrap.append(n);
+      flow.append(wrap);
+    });
+
+    if (Array.isArray(fut.removed) && fut.removed.length) {
+      removed.append(el("h3", "", "Removed or absorbed"));
+      const ul = el("ul");
+      fut.removed.forEach((r) => ul.append(el("li", "", `${r.label}: ${r.reason}`)));
+      removed.append(ul);
+    }
+  }
+
+  function render() {
+    $("procTitle").value = state.title || "";
+    $("exampleFlag").hidden = !state.example;
+    renderTranscript();
+    renderCurrent();
+    renderFuture();
+    $("designBtn").disabled = !state.lines.length || busy.fut;
+    $("redrawBtn").disabled = !state.lines.length || busy.cur || !sample;
+    $("redrawBtn").hidden = !sample;
+    if (!busy.fut) setStatus("futStatus", state.future && state.futureStale ? "Your description changed since this was designed. Press “Design the better process” to refresh it." : "");
+  }
+
+  function setStatus(id, text, opts = {}) {
+    const s = $(id);
+    s.replaceChildren();
+    s.classList.toggle("err", !!opts.err);
+    if (opts.busy) s.append(el("span", "spin"));
+    if (text) s.append(el("span", "", text));
+  }
+
+  /* ---------- Claude calls ---------- */
+  function narration() {
+    return state.lines.map((l, i) => `${i + 1}. ${l}`).join("\n").slice(-20000);
+  }
+
+  const CURRENT_PROMPT = (title, text) => `You are a business process analyst. Someone is describing how a process works TODAY, in their own words, possibly still mid-description. Map the CURRENT-STATE process exactly as described. Do not improve it.
+
+Rules:
+- One step per distinct action, in order. Short verb-first labels (max ~10 words).
+- "role" = the person, team, or system responsible, using consistent names across steps (e.g. "Front desk", "Nurse", "Manager"). If the narrator says "I", use "Me" unless they named their role. If unclear, carry forward the previous role.
+- "kind" is one of "task", "decision", "wait", "handoff".
+- For decisions, add "branches": [{"label":"Yes","to":<step id>}, ...] when the narration makes the paths clear.
+- "pain": a 2-4 word note ONLY where the narration shows delay, rework, manual re-entry, paper, phone tag, or a risky handoff. Otherwise omit.
+- Number ids 1..n.
+
+Process name: ${title || "(untitled)"}
+Narration:
+${text}
+
+Reply with only JSON: {"steps":[{"id":1,"label":"...","role":"...","kind":"task","pain":"...","branches":[{"label":"Yes","to":3}]}]}`;
+
+  const FUTURE_PROMPT = (title, text, cur) => `You are a process-improvement and automation consultant. Redesign this process so it is leaner and faster, using AI and automation wherever it is realistic today, and keeping humans for judgment, accountability, empathy, and anything that legally or ethically requires a person.
+
+Classify every future step with "mode":
+- "ai": done by AI or software automation (drafting, classifying, extracting, routing, reminders, integrations, summarizing, scheduling).
+- "human": a person must decide, approve, handle an exception, or build a relationship.
+- "physical": something in the physical world (moving goods, a blood draw, signing in person, picking up an item).
+
+Rules:
+- Eliminate steps that only exist to move information between people (re-keying, paper notes, faxes, status chasing).
+- Merge steps where one person can do them together. Put approvals in a single place.
+- Keep the order clear. Use "kind":"decision" plus "branches" for real decision points.
+- "owner": who or what performs it (a role name from the current process, "AI assistant", or "System").
+- "replaces": the current-state step ids this step covers (may be empty for new steps).
+- "note": optional, one short sentence on why the step looks this way.
+- "removed": current steps or waste that disappear, each with a short reason.
+- "cycleBefore" / "cycleAfter": rough elapsed-time estimates if the narration gives enough to guess, else omit.
+- "headline": one or two plain sentences on what changes.
+
+Process name: ${title || "(untitled)"}
+Narration:
+${text}
+
+Current-state map (JSON):
+${JSON.stringify(cur).slice(0, 20000)}
+
+Reply with only JSON:
+{"headline":"...","cycleBefore":"...","cycleAfter":"...","steps":[{"id":1,"label":"...","owner":"...","mode":"ai","kind":"task","replaces":[1,2],"note":"...","branches":[{"label":"Yes","to":4}]}],"removed":[{"label":"...","reason":"..."}]}`;
+
+  function errCopy(e) {
+    switch (e && e.code) {
+      case "not_granted": case "sampling_disabled": case "not_declared": case "capability_disabled": case "capability_removed":
+        return "Claude isn't available on this page, so the map uses a quick sentence-by-sentence draft.";
+      case "rate_limited": return "Too many requests right now. Wait a minute, then press Redraw.";
+      case "session_expired": return "Sign in to Claude again, then press Redraw.";
+      case "invalid_json": return "Claude's answer came back malformed. Press the button again to retry.";
+      case "prompt_too_large": return "The description is too long to process at once. Remove a few lines and try again.";
+      case "refused": return "Claude declined this description. Rephrase it and try again.";
+      default: return "Couldn't reach Claude. Press the button again to retry.";
+    }
+  }
+  const PERMANENT = new Set(["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"]);
+
+  async function mapCurrent() {
+    if (!state.lines.length) return;
+    if (!sample) {
+      state.current = localParse(state.lines);
+      setStatus("curStatus", "Quick draft: one step per sentence. Claude-powered mapping runs when this page is opened in Claude.");
+      save(); render();
+      return;
+    }
+    curCtl?.abort();
+    const ctl = curCtl = new AbortController();
+    busy.cur = true;
+    // Instant preview while Claude works, if we have nothing yet
+    if (!state.current || state.current.draft || state.example) state.current = localParse(state.lines);
+    render();
+    setStatus("curStatus", "Mapping what you've said…", { busy: true });
+    try {
+      const res = await sample.json(CURRENT_PROMPT(state.title, narration()), { signal: ctl.signal, modelTier: "quick" });
+      if (ctl !== curCtl) return;
+      if (!res || !Array.isArray(res.steps)) throw { code: "invalid_json" };
+      state.current = { steps: res.steps.filter((s) => s && s.label) };
+      if (state.future) state.futureStale = true;
+      setStatus("curStatus", "");
+    } catch (e) {
+      if (e && e.code === "cancelled") return;
+      if (PERMANENT.has(e && e.code)) sample = null;
+      state.current = state.current && !state.current.draft ? state.current : localParse(state.lines);
+      setStatus("curStatus", errCopy(e), { err: true });
+    } finally {
+      if (ctl === curCtl) { busy.cur = false; save(); render(); }
+    }
+  }
+
+  async function designFuture() {
+    if (!state.lines.length) return;
+    if (!sample) {
+      setStatus("futStatus", "The redesign needs Claude. Open this page in Claude (claude.ai) and allow it to use Claude when asked.", { err: true });
+      return;
+    }
+    futCtl?.abort();
+    const ctl = futCtl = new AbortController();
+    busy.fut = true;
+    render();
+    setStatus("futStatus", "Redesigning the process. This usually takes 20–60 seconds…", { busy: true });
+    try {
+      // Make sure the current map reflects the latest narration first.
+      if (!state.current || state.current.draft || busy.cur) {
+        setStatus("futStatus", "Finishing the current-state map first…", { busy: true });
+        await mapCurrent();
+        setStatus("futStatus", "Redesigning the process. This usually takes 20–60 seconds…", { busy: true });
+      }
+      const res = await sample.json(FUTURE_PROMPT(state.title, narration(), state.current), { signal: ctl.signal, cache: false });
+      if (ctl !== futCtl) return;
+      if (!res || !Array.isArray(res.steps)) throw { code: "invalid_json" };
+      state.future = res;
+      state.futureStale = false;
+      setStatus("futStatus", "");
+    } catch (e) {
+      if (e && e.code === "cancelled") return;
+      if (PERMANENT.has(e && e.code)) sample = null;
+      busy.fut = false;
+      render();
+      setStatus("futStatus", errCopy(e), { err: true });
+      return;
+    } finally {
+      if (ctl === futCtl) { busy.fut = false; save(); }
+    }
+    render();
+  }
+
+  /* ---------- Mermaid export ---------- */
+  function mermaidId(n) { return "S" + String(n).replace(/\W/g, ""); }
+  function mq(s) { return String(s || "").replace(/"/g, "'"); }
+  function toMermaid(steps, colorKey) {
+    if (!steps || !steps.length) return "";
+    const out = ["flowchart TD"];
+    const classes = new Map();
+    steps.forEach((s, i) => {
+      const id = mermaidId(s.id ?? i + 1);
+      const who = colorKey === "mode" ? `${MODE_LABEL[normMode(s.mode)]} · ${s.owner || ""}` : s.role || "";
+      const text = `${s.id ?? i + 1}. ${mq(s.label)}<br/><small>${mq(who)}</small>`;
+      out.push(s.kind === "decision" ? `  ${id}{"${text}"}` : `  ${id}["${text}"]`);
+      const cls = colorKey === "mode" ? normMode(s.mode) : "r" + (state.roleOrder.indexOf((s.role || "unassigned").toLowerCase()) % 8 + 1);
+      classes.set(cls, [...(classes.get(cls) || []), id]);
+    });
+    steps.forEach((s, i) => {
+      const id = mermaidId(s.id ?? i + 1);
+      if (Array.isArray(s.branches) && s.branches.length) s.branches.forEach((b) => out.push(`  ${id} -->|${mq(b.label)}| ${mermaidId(b.to)}`));
+      else if (i < steps.length - 1) out.push(`  ${id} --> ${mermaidId(steps[i + 1].id ?? i + 2)}`);
+    });
+    const fills = { ai: "#efebfd,stroke:#6a4ee0", human: "#fcf1dd,stroke:#c47a0c", physical: "#e2f3e9,stroke:#2c8356",
+      r1: "#dde8fa,stroke:#2e6fd8", r2: "#f8dfde,stroke:#cf4a45", r3: "#d9efeb,stroke:#23907f", r4: "#f4e7d0,stroke:#b8740a",
+      r5: "#ebe1f8,stroke:#8653d0", r6: "#f7e0ec,stroke:#cc4f93", r7: "#e4eed9,stroke:#5b8a2d", r8: "#e3e6e9,stroke:#52606d" };
+    for (const [cls, ids] of classes) { out.push(`  classDef ${cls} fill:${fills[cls]},color:#16212b`); out.push(`  class ${ids.join(",")} ${cls}`); }
+    return out.join("\n");
+  }
+  async function copyText(btn, text) {
+    const orig = btn.textContent;
+    if (!text) { btn.textContent = "Nothing to copy yet"; setTimeout(() => (btn.textContent = orig), 1600); return; }
+    try { await navigator.clipboard.writeText(text); btn.textContent = "Copied"; }
+    catch {
+      const ta = el("textarea"); ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
+      document.body.append(ta); ta.select();
+      try { document.execCommand("copy"); btn.textContent = "Copied"; } catch { btn.textContent = "Copy failed"; }
+      ta.remove();
+    }
+    setTimeout(() => (btn.textContent = orig), 1600);
+  }
+
+  /* ---------- Events ---------- */
+  function clearExample() {
+    if (!state.example) return;
+    state = { title: state.title === EXAMPLE.title ? "" : state.title, lines: [], current: null, future: null, roleOrder: [] };
+  }
+  function changed() {
+    if (state.future) state.futureStale = true;
+    save();
+    render();
+    mapCurrent();
+  }
+
+  $("composer").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = $("say").value.trim();
+    if (!v) return;
+    clearExample();
+    state.lines.push(v);
+    $("say").value = "";
+    changed();
+  });
+  $("say").addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); $("composer").requestSubmit(); }
+  });
+  $("procTitle").addEventListener("input", (e) => { state.title = e.target.value; save(); });
+  $("designBtn").onclick = designFuture;
+  $("redrawBtn").onclick = mapCurrent;
+  $("newBtn").onclick = () => { $("confirmNew").hidden = false; $("confirmYes").focus(); };
+  $("confirmNo").onclick = () => { $("confirmNew").hidden = true; };
+  $("confirmYes").onclick = () => {
+    curCtl?.abort(); futCtl?.abort(); busy.cur = busy.fut = false;
+    state = { title: "", lines: [], current: null, future: null, roleOrder: [] };
+    $("confirmNew").hidden = true;
+    ["curStatus", "futStatus"].forEach((id) => setStatus(id, ""));
+    save(); render(); $("procTitle").focus();
+  };
+  $("copyCur").onclick = (e) => copyText(e.currentTarget, toMermaid(state.current?.steps, "role"));
+  $("copyFut").onclick = (e) => copyText(e.currentTarget, toMermaid(state.future?.steps, "mode"));
+
+  render();
+
+  if (window.claude && typeof window.claude.use === "function") {
+    window.claude.use("sample").then((s) => { sample = s || null; render(); }).catch(() => {});
+  }
+})();
+</script>
