@@ -155,6 +155,20 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 .removed ul { margin: 10px 0 0; padding-left: 18px; font-size: 14.5px; color: var(--ink-2); display: grid; gap: 6px; }
 .removed b { color: var(--ink); font-weight: 500; }
 
+.qs { display: grid; gap: 14px; }
+.qcard { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 14px 0; border-top: 1px solid var(--line); }
+.qcard:first-child { border-top: 0; padding-top: 0; }
+.qn { width: 26px; height: 26px; border-radius: 50%; background: var(--soft); color: var(--ink-2); display: grid; place-items: center; font-size: 13px; font-weight: 600; }
+.qbody { display: grid; gap: 8px; min-width: 0; }
+.qtext { font-size: 16px; font-weight: 500; line-height: 1.4; }
+.qwhy { font-size: 13.5px; color: var(--ink-3); margin-top: -4px; }
+.opts { display: flex; flex-wrap: wrap; gap: 6px; }
+.opt { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 4px 12px; font-size: 13.5px; color: var(--ink-2); }
+.opt:hover { border-color: var(--ink-3); color: var(--ink); }
+.opt[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.qans { width: 100%; min-height: 40px; resize: vertical; border: 1px solid var(--line); background: var(--soft); color: var(--ink); border-radius: 8px; padding: 8px 10px; font: 15px/1.4 var(--body); }
+.qactions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid var(--line); }
+.qactions .btn.primary { padding: 10px 16px; }
 .map-foot { display: flex; justify-content: flex-end; }
 
 .confirm { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 14.5px; background: var(--panel); border: 1px solid var(--line); padding: 10px 14px; border-radius: 10px; }
@@ -219,6 +233,7 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
       <div class="map-head">
         <div class="seg" role="tablist" aria-label="Which version">
           <button role="tab" id="tabToday" type="button">Today<span class="count" id="countToday"></span></button>
+          <button role="tab" id="tabQs" type="button" hidden>Questions<span class="count" id="countQs"></span></button>
           <button role="tab" id="tabBetter" type="button">Redesigned<span class="count" id="countBetter"></span></button>
         </div>
         <div class="status" id="status" aria-live="polite"></div>
@@ -319,7 +334,8 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
   let sample = null;
   let curCtl = null;
   let futCtl = null;
-  const busy = { cur: false, fut: false };
+  const busy = { cur: false, fut: false, ask: false };
+  let askCtl = null;
   let statusMsg = { text: "", busy: false, err: false };
 
   function load() {
@@ -489,6 +505,60 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
 
   function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
+  function renderQuestions(view) {
+    const qs = state.questions;
+    if (!qs) {
+      view.append(el("div", "placeholder", "Reading your process for missing steps and vague spots…"));
+      return;
+    }
+    view.append(el("p", "summary", "A few questions before the redesign. Answer what you can and leave the rest blank."));
+    const list = el("div", "qs");
+    const goBtn = el("button", "btn primary");
+    const updateGo = () => {
+      const n = qs.filter((q) => q.answer.trim()).length;
+      goBtn.textContent = n ? `Add ${n} answer${n === 1 ? "" : "s"} and redesign` : "Add answers and redesign";
+      goBtn.disabled = !n;
+    };
+    qs.forEach((q, i) => {
+      const card = el("section", "qcard");
+      const body = el("div", "qbody");
+      body.append(el("div", "qtext", q.q));
+      const step = q.step != null && state.current?.steps?.find((s) => String(s.id) === String(q.step));
+      const why = [q.why, step ? `About step ${step.id}: ${step.label}` : ""].filter(Boolean).join(" · ");
+      if (why) body.append(el("div", "qwhy", why));
+      const ans = el("textarea", "qans");
+      ans.id = "qa" + i;
+      ans.rows = 1;
+      ans.placeholder = "Your answer";
+      ans.setAttribute("aria-label", q.q);
+      ans.value = q.answer;
+      const opts = el("div", "opts");
+      const syncOpts = () => opts.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-pressed", String(b.textContent === q.answer.trim())));
+      (q.options || []).forEach((o) => {
+        const b = el("button", "opt", o);
+        b.type = "button";
+        b.onclick = () => { q.answer = q.answer.trim() === o ? "" : o; ans.value = q.answer; syncOpts(); updateGo(); save(); };
+        opts.append(b);
+      });
+      ans.oninput = () => { q.answer = ans.value; syncOpts(); updateGo(); save(); };
+      syncOpts();
+      if (q.options && q.options.length) body.append(opts);
+      body.append(ans);
+      card.append(el("div", "qn", String(i + 1)), body);
+      list.append(card);
+    });
+    view.append(list);
+    const actions = el("div", "qactions");
+    goBtn.type = "button";
+    goBtn.onclick = () => applyAnswers(false);
+    const skip = el("button", "link", "Skip and redesign now");
+    skip.type = "button";
+    skip.onclick = () => applyAnswers(true);
+    updateGo();
+    actions.append(goBtn, skip);
+    view.append(actions);
+  }
+
   function renderStatus() {
     const s = $("status");
     s.replaceChildren();
@@ -505,19 +575,27 @@ button:focus-visible, textarea:focus-visible, input:focus-visible { outline: 2px
     if (document.activeElement !== $("procTitle")) $("procTitle").value = state.title || "";
     $("exampleNote").hidden = !state.example;
     renderTranscript();
-    const today = state.view !== "better";
+    const v = state.view === "questions" && (state.questions || busy.ask) ? "questions" : state.view === "better" ? "better" : "today";
+    const today = v === "today";
     $("tabToday").setAttribute("aria-selected", String(today));
-    $("tabBetter").setAttribute("aria-selected", String(!today));
+    $("tabQs").setAttribute("aria-selected", String(v === "questions"));
+    $("tabBetter").setAttribute("aria-selected", String(v === "better"));
+    $("tabQs").hidden = !(state.questions || busy.ask);
+    $("countQs").textContent = state.questions ? String(state.questions.length) : "";
     $("countToday").textContent = state.current?.steps?.length ? String(state.current.steps.length) : "";
     $("countBetter").textContent = state.future?.steps?.length ? String(state.future.steps.length) : "";
     const view = $("view");
     view.replaceChildren();
     view.style.display = "grid";
     view.style.gap = "20px";
-    view.style.opacity = !today && state.futureStale ? ".6" : "1";
-    today ? renderToday(view) : renderBetter(view);
-    $("designBtn").disabled = !state.lines.length || busy.fut;
-    $("designBtn").textContent = busy.fut ? "Designing…" : state.future && !state.example ? "Redesign again" : "Design a better process";
+    view.style.opacity = v === "better" && state.futureStale ? ".6" : "1";
+    $("copyBtn").hidden = v === "questions";
+    if (v === "questions") renderQuestions(view);
+    else if (v === "better") renderBetter(view);
+    else renderToday(view);
+    $("designBtn").disabled = !state.lines.length || busy.fut || busy.ask;
+    $("designBtn").textContent = busy.ask ? "Checking for gaps…" : busy.fut ? "Designing…"
+      : state.questions ? "Answer the questions" : state.future && !state.example ? "Redesign again" : "Design a better process";
     renderStatus();
   }
 
@@ -655,6 +733,99 @@ Reply with only JSON:
     }
   }
 
+  /* ---------- Clarifying questions ---------- */
+  const QUESTIONS_PROMPT = (title, text, cur) => `You are a business process analyst interviewing someone about a process they just described. Before anyone redesigns it, find what is missing or vague so the map is accurate.
+
+Look for:
+- Gaps: something must happen between two steps that they didn't mention.
+- Unclear ownership: a step where it isn't clear who does it ("someone", "they", "it gets sent").
+- Unclear trigger or end: what starts the process, and how everyone knows it's finished.
+- Decisions with only one path described: what happens on the "no", reject, or exception path.
+- Waits and timing: how long a wait or queue really takes, and what causes it.
+- Tools and hand-offs: which system, form, or channel is used where that matters for improving it.
+- Volume: how often the process runs, only if it would change the redesign.
+
+Ask 3 to 6 questions, most important first. Each is short, specific to this process, in plain everyday language, and asks one thing. Don't ask about anything the narration already answers. For each, give "why" (under 12 words), "step" (the id of the current-state step it's about, or null), and "options": 2 to 4 short likely answers when you can reasonably guess them, otherwise an empty list.
+
+Process name: ${title || "(untitled)"}
+Narration:
+${text}
+
+Current-state map (JSON):
+${JSON.stringify(cur).slice(0, 20000)}
+
+Reply with only JSON: {"questions":[{"q":"...","why":"...","step":3,"options":["...","..."]}]}
+If the process is already clear and complete, reply {"questions":[]}.`;
+
+  function narrKey() {
+    let h = 0;
+    for (const ch of state.lines.join("\n")) h = (h * 31 + ch.charCodeAt(0)) | 0;
+    return state.lines.length + ":" + h;
+  }
+
+  async function startDesign() {
+    if (!state.lines.length) return;
+    if (state.questions) { state.view = "questions"; save(); render(); return; }
+    if (!sample || state.clarifiedFor === narrKey()) { designFuture(); return; }
+    askCtl?.abort();
+    const ctl = askCtl = new AbortController();
+    state.example = false;
+    state.view = "questions";
+    busy.ask = true;
+    render();
+    try {
+      if (!state.current || state.current.draft || busy.cur) {
+        setStatus("Finishing today's map first…", { busy: true });
+        await mapCurrent();
+      }
+      setStatus("Checking for missing steps and vague spots…", { busy: true });
+      const res = await sample.json(QUESTIONS_PROMPT(state.title, narration(), state.current), { signal: ctl.signal, cache: false });
+      if (ctl !== askCtl) return;
+      const qs = (res && Array.isArray(res.questions) ? res.questions : [])
+        .filter((q) => q && q.q)
+        .slice(0, 6)
+        .map((q) => ({
+          q: String(q.q),
+          why: q.why ? String(q.why) : "",
+          step: q.step ?? null,
+          options: Array.isArray(q.options) ? q.options.map(String).filter(Boolean).slice(0, 4) : [],
+          answer: "",
+        }));
+      busy.ask = false;
+      if (!qs.length) {
+        state.clarifiedFor = narrKey();
+        setStatus("");
+        designFuture();
+        return;
+      }
+      state.questions = qs;
+      setStatus("");
+    } catch (e) {
+      if (e && e.code === "cancelled") return;
+      if (PERMANENT.has(e && e.code)) sample = null;
+      busy.ask = false;
+      state.view = "today";
+      setStatus(errCopy(e), { err: true });
+    } finally {
+      if (ctl === askCtl) { busy.ask = false; save(); render(); }
+    }
+  }
+
+  async function applyAnswers(skip) {
+    const qs = state.questions || [];
+    state.questions = null;
+    const answered = skip ? [] : qs.filter((q) => q.answer.trim());
+    answered.forEach((q) => state.lines.push(`${q.q} ${tidy(q.answer) || q.answer.trim()}`));
+    state.clarifiedFor = narrKey();
+    save();
+    if (answered.length) {
+      state.view = "today";
+      render();
+      await mapCurrent();
+    }
+    designFuture();
+  }
+
   /* ---------- Mermaid export ---------- */
   function mermaidId(n) { return "S" + String(n).replace(/\W/g, ""); }
   function mq(s) { return String(s || "").replace(/"/g, "'"); }
@@ -708,7 +879,7 @@ Reply with only JSON:
     mapCurrent();
   }
   function reset() {
-    curCtl?.abort(); futCtl?.abort(); busy.cur = busy.fut = false;
+    curCtl?.abort(); futCtl?.abort(); askCtl?.abort(); busy.cur = busy.fut = busy.ask = false;
     state = blank();
     $("confirmNew").hidden = true;
     setStatus("");
@@ -866,7 +1037,8 @@ Reply with only a JSON array of strings.`, { modelTier: "quick" });
     if (state.example) { const t = e.target.value; state = blank(); state.title = t; render(); }
     state.title = e.target.value; save();
   });
-  $("designBtn").onclick = designFuture;
+  $("designBtn").onclick = startDesign;
+  $("tabQs").onclick = () => { state.view = "questions"; save(); render(); };
   $("tabToday").onclick = () => { state.view = "today"; save(); render(); };
   $("tabBetter").onclick = () => { state.view = "better"; save(); render(); };
   $("startOwn").onclick = reset;
